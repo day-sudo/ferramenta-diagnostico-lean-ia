@@ -29,3 +29,4 @@ O uso da ferramenta demonstrou resultados significativos em casos de sucesso:
 * **90%** de Redução na Reincidência (Exemplo: Caso de Incidente de TI)
 * **40%** de Redução no Tempo de Onboarding (Exemplo: Caso de Otimização Lean)
 * **Diagnóstico Acelerado:** Redução do tempo de consultoria de **5 dias para 30 minutos** (graças à IA).
+  
