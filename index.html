@@ -306,117 +306,60 @@
     </footer>
 
     <!-- =G================================= -->
+   </footer>
+
+    <!-- =================================== -->
     <!-- JAVASCRIPT                          -->
-    <!-- Removido 'type="module"' para garantir que irParaEtapa seja acessível globalmente -->
     <!-- =================================== -->
     <script>
         // Instância global do BpmnJS
         const modeler = new BpmnJS({
             container: '#bpmn-canvas',
-            keyboard: {
-                bindTo: window
-            }
+            keyboard: { bindTo: window }
         });
 
-        // Armazenamento em memória dos dados 5W2H
-        let dataStore5W2H = {}; // Ex: { 'Task_123id': { what: '...', ... } }
+        let dataStore5W2H = {};
         let currentSelectedTaskId = null;
-        let lastReportContent = ''; // Para armazenar o último relatório HTML gerado
-        let currentEtapaIndex = 0; // Estado da navegação
+        let lastReportMarkdown = '';
 
-        // Elementos UI
         const aiButton = document.getElementById('analyze-ai-btn');
         const aiLoading = document.getElementById('ai-loading');
         const aiError = document.getElementById('ai-error');
+        const aiErrorMessage = document.getElementById('ai-error-message');
         const aiResults = document.getElementById('ai-results');
         const exportMarkdownBtn = document.getElementById('export-markdown-btn');
-        const exportFeedback = document.getElementById('export-feedback');
-        const apiKeyInput = document.getElementById('api-key-input'); // NOVO ELEMENTO
+        const apiKeyInput = document.getElementById('api-key-input');
 
-        // XML de exemplo
         const exampleXML = `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
   <bpmn:process id="Process_1" isExecutable="false">
-    <bpmn:startEvent id="StartEvent_1" name="Pedido Recebido">
-      <bpmn:outgoing>Flow_1</bpmn:outgoing>
-    </bpmn:startEvent>
-    <bpmn:task id="Task_1" name="Analisar Pedido">
-      <bpmn:incoming>Flow_1</bpmn:incoming>
-      <bpmn:outgoing>Flow_2</bpmn:outgoing>
-    </bpmn:task>
+    <bpmn:startEvent id="StartEvent_1" name="Pedido Recebido"><bpmn:outgoing>Flow_1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:task id="Task_1" name="Analisar Pedido"><bpmn:incoming>Flow_1</bpmn:incoming><bpmn:outgoing>Flow_2</bpmn:outgoing></bpmn:task>
     <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:exclusiveGateway id="Gateway_1" name="Pedido Aprovado?">
-      <bpmn:incoming>Flow_2</bpmn:incoming>
-      <bpmn:outgoing>Flow_3</bpmn:outgoing>
-      <bpmn:outgoing>Flow_4</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="Gateway_1" />
-    <bpmn:task id="Task_2" name="Notificar Rejeição">
-      <bpmn:incoming>Flow_3</bpmn:incoming>
-      <bpmn:outgoing>Flow_5</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_3" name="Não" sourceRef="Gateway_1" targetRef="Task_2" />
-    <bpmn:task id="Task_3" name="Processar Pagamento">
-      <bpmn:incoming>Flow_4</bpmn:incoming>
-      <bpmn:outgoing>Flow_6</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_4" name="Sim" sourceRef="Gateway_1" targetRef="Task_3" />
-    <bpmn:endEvent id="EndEvent_1" name="Pedido Rejeitado">
-      <bpmn:incoming>Flow_5</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_2" targetRef="EndEvent_1" />
-    <bpmn:task id="Task_4" name="Enviar Produto">
-      <bpmn:incoming>Flow_6</incoming>
-      <bpmn:outgoing>Flow_7</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_3" targetRef="Task_4" />
-    <bpmn:endEvent id="EndEvent_2" name="Pedido Concluído">
-      <bpmn:incoming>Flow_7</incoming>
-    </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_7" sourceRef="Task_4" targetRef="EndEvent_2" />
   </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
 
-        /**
-         * Carrega e exibe um diagrama BPMN no modelador.
-         * @param {string} xml - O XML do BPMN.
-         */
         async function loadDiagram(xml) {
             try {
                 await modeler.importXML(xml);
                 const canvas = modeler.get('canvas');
                 canvas.zoom('fit-viewport');
-                console.log('Diagrama carregado com sucesso!');
             } catch (err) {
-                console.error('Erro ao carregar diagrama BPMN:', err);
+                console.error('Erro ao carregar diagrama:', err);
             }
         }
-        
-        /**
-         * Obtém todas as tarefas (UserTasks, Tasks) do diagrama.
-         * @returns {Array} - Um array de elementos de tarefa.
-         */
+
         function getTasksFromModeler() {
             const elementRegistry = modeler.get('elementRegistry');
-            // Filtra por tipos de tarefa
             return elementRegistry.filter(el => 
                 el.type === 'bpmn:Task' || el.type === 'bpmn:UserTask' || el.type === 'bpmn:ServiceTask'
             );
         }
 
-        /**
-         * Coleta e estrutura todos os dados de BPMN, SIPOC e 5W2H.
-         */
         function collectProcessData() {
-            // 1. Coleta Tarefas BPMN
             const bpmnTasks = getTasksFromModeler();
             const taskNames = bpmnTasks.map(t => t.businessObject.name || t.id);
 
-            // 2. Coleta dados SIPOC
             const sipocData = {
                 suppliers: document.getElementById('sipoc-s').value,
                 inputs: document.getElementById('sipoc-i').value,
@@ -425,167 +368,52 @@
                 customers: document.getElementById('sipoc-c').value
             };
 
-            // 3. Coleta dados 5W2H (apenas tarefas com dados preenchidos)
-            const detailedTasks = Object.keys(dataStore5W2H)
-                .map(taskId => {
-                    // Encontra o nome da tarefa no modelo
-                    const taskElement = bpmnTasks.find(t => t.id === taskId);
-                    const taskName = taskElement ? (taskElement.businessObject.name || taskId) : taskId;
-                    
-                    const data = dataStore5W2H[taskId];
-                    // Verifica se pelo menos um campo 5W2H foi preenchido
-                    if (Object.values(data).some(val => val && val.trim() !== '')) {
-                        return {
-                            name: taskName,
-                            ...data
-                        };
-                    }
-                    return null;
-                })
-                .filter(Boolean); // Remove nulos/vazios
-            
-            return {
-                taskNames,
-                sipocData,
-                detailedTasks
-            };
-        }
-
-
-        // ------------------------------------
-        // Lógica de Navegação Progressiva (irParaEtapa)
-        // ------------------------------------
-        
-        // Função para alternar a exibição das etapas e atualizar o estado do menu
-        function irParaEtapa(indice) {
-            const etapas = ['bpmn', 'sipoc', '5w2h', 'ia']; // REMOVIDO: 'documentacao'
-            const totalEtapas = etapas.length;
-            currentEtapaIndex = indice; // Atualiza o índice global
-
-            // 1. Mostrar/Esconder o Conteúdo da Etapa
-            etapas.forEach((id, i) => {
-                const contentDiv = document.getElementById(`etapa-${id}`);
-                if (contentDiv) {
-                    contentDiv.classList.toggle('hidden', i !== indice);
-                }
+            const detailedTasks = Object.keys(dataStore5W2H).map(taskId => {
+                const taskElement = bpmnTasks.find(t => t.id === taskId);
+                const taskName = taskElement ? (taskElement.businessObject.name || taskId) : taskId;
+                return { name: taskName, ...dataStore5W2H[taskId] };
             });
 
-            // 2. Atualizar o Estilo do Botão Ativo (Feedback visual)
-            for (let i = 0; i < totalEtapas; i++) {
-                const btn = document.getElementById(`btn-${i}`);
-                if (btn) {
-                    if (i === indice) {
-                        // Estilo Ativo: cor principal, anel de foco (ring), sombra maior
-                        btn.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
-                        btn.classList.add('bg-indigo-700', 'ring-4', 'ring-indigo-300', 'ring-offset-2', 'shadow-lg');
-                    } else {
-                        // Estilo Inativo: cor secundária/padrão
-                        btn.classList.remove('bg-indigo-700', 'ring-4', 'ring-indigo-300', 'ring-offset-2', 'shadow-lg');
-                        btn.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
-                    }
-                }
-            }
-
-            // Ações específicas ao trocar de aba (carregar dados dinâmicos)
-            const currentTabId = etapas[indice];
-            if (currentTabId === 'sipoc') {
-                updateSipocTab();
-            } else if (currentTabId === '5w2h') {
-                update5w2hTab();
-            }
+            return { taskNames, sipocData, detailedTasks };
         }
 
-        // ------------------------------------
-        // Lógica da Etapa BPMN
-        // ------------------------------------
-        document.getElementById('load-example-btn').addEventListener('click', () => {
-            loadDiagram(exampleXML);
-        });
+        function irParaEtapa(indice) {
+            const etapas = ['bpmn', 'sipoc', '5w2h', 'ia'];
+            etapas.forEach((id, i) => {
+                const contentDiv = document.getElementById(`etapa-${id}`);
+                if (contentDiv) contentDiv.classList.toggle('hidden', i !== indice);
+            });
 
-        document.getElementById('save-xml-btn').addEventListener('click', async () => {
-            try {
-                const { xml } = await modeler.saveXML({ format: true });
-                const blob = new Blob([xml], { type: 'application/bpmn20-xml;charset=utf-8' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'processo.bpmn';
-                link.click();
-            } catch (err) {
-                console.error('Erro ao salvar XML:', err);
-            }
-        });
+            if (etapas[indice] === 'sipoc') updateSipocTab();
+            if (etapas[indice] === '5w2h') update5w2hTab();
+        }
 
-        // ------------------------------------
-        // Lógica da Etapa SIPOC
-        // ------------------------------------
+        document.getElementById('load-example-btn')?.addEventListener('click', () => loadDiagram(exampleXML));
+
         function updateSipocTab() {
             const tasks = getTasksFromModeler();
             const processList = document.getElementById('sipoc-p');
-            processList.innerHTML = ''; // Limpa a lista
-            
-            if (tasks.length === 0) {
-                processList.innerHTML = '<li class="text-gray-500 italic">Nenhuma tarefa encontrada no diagrama.</li>';
-                return;
-            }
-
-            tasks.forEach(task => {
-                const taskName = task.businessObject.name || `(Tarefa sem nome - ID: ${task.id})`;
-                const li = document.createElement('li');
-                li.textContent = taskName;
-                processList.appendChild(li);
-            });
+            processList.innerHTML = tasks.length === 0 
+                ? '<li class="text-gray-500 italic">Nenhuma tarefa encontrada.</li>' 
+                : tasks.map(t => `<li>${t.businessObject.name || t.id}</li>`).join('');
         }
-
-        // ------------------------------------
-        // Lógica da Etapa 5W2H
-        // ------------------------------------
-        const taskSelect = document.getElementById('task-select');
-        const form5w2h = document.getElementById('5w2h-form');
-        const taskTitle5w2h = document.getElementById('5w2h-task-title');
-        const saveButton5w2h = document.getElementById('save-5w2h-btn');
-        const saveFeedback = document.getElementById('5w2h-save-feedback');
 
         function update5w2hTab() {
+            const taskSelect = document.getElementById('task-select');
             const tasks = getTasksFromModeler();
-            taskSelect.innerHTML = '<option value="">-- Selecione uma tarefa --</option>'; // Reseta
-            
-            tasks.forEach(task => {
-                const taskName = task.businessObject.name || `(Tarefa sem nome - ID: ${task.id})`;
-                const option = document.createElement('option');
-                option.value = task.id;
-                option.textContent = taskName;
-                taskSelect.appendChild(option);
-            });
-
-            // Restaura a seleção se já houver uma
-            if (currentSelectedTaskId) {
-                taskSelect.value = currentSelectedTaskId;
-            }
-            // Dispara o evento de change para carregar o formulário, caso haja uma seleção
-            taskSelect.dispatchEvent(new Event('change'));
+            taskSelect.innerHTML = '<option value="">-- Selecione uma tarefa --</option>' + 
+                tasks.map(t => `<option value="${t.id}">${t.businessObject.name || t.id}</option>`).join('');
         }
 
-        // Evento ao selecionar uma tarefa no dropdown
-        taskSelect.addEventListener('change', (e) => {
+        document.getElementById('task-select')?.addEventListener('change', (e) => {
             currentSelectedTaskId = e.target.value;
+            const form = document.getElementById('5w2h-form');
             if (!currentSelectedTaskId) {
-                form5w2h.classList.add('hidden');
+                form.classList.add('hidden');
                 return;
             }
-
-            // Popula o título
-            const selectedOption = taskSelect.options[taskSelect.selectedIndex];
-            const taskName = selectedOption.textContent; // Usar o texto da opção
-            taskTitle5w2h.textContent = `Analisando: "${taskName}"`;
-
-
-            // Garante que o objeto para a tarefa exista no dataStore
-            if (!dataStore5W2H[currentSelectedTaskId]) {
-                 dataStore5W2H[currentSelectedTaskId] = {};
-            }
-
-            // Carrega dados salvos, se existirem
-            const data = dataStore5W2H[currentSelectedTaskId];
+            form.classList.remove('hidden');
+            const data = dataStore5W2H[currentSelectedTaskId] || {};
             document.getElementById('5w2h-what').value = data.what || '';
             document.getElementById('5w2h-why').value = data.why || '';
             document.getElementById('5w2h-who').value = data.who || '';
@@ -593,312 +421,86 @@
             document.getElementById('5w2h-when').value = data.when || '';
             document.getElementById('5w2h-how').value = data.how || '';
             document.getElementById('5w2h-how-much').value = data.howMuch || '';
-
-            // Exibe o formulário
-            form5w2h.classList.remove('hidden');
-            saveFeedback.style.display = 'none';
         });
 
-        // Evento ao salvar o formulário 5W2H
-        saveButton5w2h.addEventListener('click', () => {
+        document.getElementById('save-5w2h-btn')?.addEventListener('click', () => {
             if (!currentSelectedTaskId) return;
-
             dataStore5W2H[currentSelectedTaskId] = {
-                what: document.getElementById('5w2h-what').value.trim(),
-                why: document.getElementById('5w2h-why').value.trim(),
-                who: document.getElementById('5w2h-who').value.trim(),
-                where: document.getElementById('5w2h-where').value.trim(),
-                when: document.getElementById('5w2h-when').value.trim(),
-                how: document.getElementById('5w2h-how').value.trim(),
-                howMuch: document.getElementById('5w2h-how-much').value.trim(),
+                what: document.getElementById('5w2h-what').value,
+                why: document.getElementById('5w2h-why').value,
+                who: document.getElementById('5w2h-who').value,
+                where: document.getElementById('5w2h-where').value,
+                when: document.getElementById('5w2h-when').value,
+                how: document.getElementById('5w2h-how').value,
+                howMuch: document.getElementById('5w2h-how-much').value
             };
-            
-            console.log('Dados 5W2H salvos:', dataStore5W2H);
-            
-            // Feedback visual
-            saveFeedback.style.display = 'block';
-            setTimeout(() => {
-                saveFeedback.style.display = 'none';
-            }, 2000);
+            const feedback = document.getElementById('5w2h-save-feedback');
+            feedback.style.display = 'inline';
+            setTimeout(() => feedback.style.display = 'none', 2000);
         });
 
-        // ------------------------------------
-        // Lógica da Etapa IA Lean
-        // ------------------------------------
-        
-        /**
-         * Monta a query final do usuário com todos os dados estruturados.
-         */
-        function generateAIPrompt(processData, xml) {
-            const detailedTasksString = processData.detailedTasks.length > 0 ? 
-                processData.detailedTasks.map(tarefa => `
-Tarefa: ${tarefa.name}
-- O quê (What): ${tarefa.what || 'Não preenchido'}
-- Por quê (Why): ${tarefa.why || 'Não preenchido'}
-- Quem (Who): ${tarefa.who || 'Não preenchido'}
-- Onde (Where): ${tarefa.where || 'Não preenchido'}
-- Quando (When): ${tarefa.when || 'Não preenchido'}
-- Como (How): ${tarefa.how || 'Não preenchido'}
-- Quanto (How Much): ${tarefa.howMuch || 'Não preenchido'}
-`).join('\n')
-            : 'Nenhum dado 5W2H detalhado foi fornecido para as tarefas.';
-
-            return `
-Aqui estão os dados para análise:
-
-## 1. Processo BPMN (XML)
-\`\`\`xml
-${xml}
-\`\`\`
-
-## 2. Contexto SIPOC
-- Fornecedores (Suppliers): ${processData.sipocData.suppliers || 'Não preenchido'}
-- Entradas (Inputs): ${processData.sipocData.inputs || 'Não preenchido'}
-- Processo: ${processData.sipocData.process}
-- Saídas (Outputs): ${processData.sipocData.outputs || 'Não preenchido'}
-- Clientes (Customers): ${processData.sipocData.customers || 'Não preenchido'}
-
-## 3. Detalhamento 5W2H das Tarefas
-${detailedTasksString}
-
----
-🔍 Objetivo da análise (Sistema):
-Utilize metodologias Lean Manufacturing e Six Sigma para identificar desperdícios (Muda), gargalos, falhas de controle e oportunidades de melhoria. Gere um Relatório de Diagnóstico e Otimização completo e estruturado de acordo com as instruções do 'System Instruction'.
-`;
-        }
-
+        // --- LÓGICA DE CHAMADA DA IA (GEMINI) ---
         aiButton.addEventListener('click', async () => {
-            aiLoading.style.display = 'block';
-            aiResults.innerHTML = '';
-            aiError.style.display = 'none';
-            aiButton.disabled = true;
-            exportMarkdownBtn.disabled = true; // Desabilita exportação
-            lastReportContent = '';
-
-            try {
-                // 1. Obter o XML do BPMN
-                const { xml } = await modeler.saveXML({ format: true });
-                
-                // 2. Coletar e estruturar todos os dados
-                const processData = collectProcessData();
-
-                // 3. Sistema Prompt (NOVO: Estrutura detalhada do relatório)
-                const systemPrompt = `Você é um consultor especialista em Lean Manufacturing, Seis Sigma e Otimização de Processos (BPM). Sua tarefa é analisar o processo de negócio descrito abaixo e gerar um Relatório de Diagnóstico e Otimização completo, utilizando a metodologia Lean e Six Sigma.
-
-                O relatório DEVE ser gerado estritamente em Markdown e seguir a estrutura exata e a ordem abaixo. Utilize os dados de BPMN, SIPOC e 5W2H fornecidos para preencher cada seção com insights específicos.
-
-                # RELATÓRIO DE DIAGNÓSTICO E OTIMIZAÇÃO DE PROCESSOS
-
-                **Consultor:** [Seu Nome]
-                **Processo Analisado:** [Nome do Processo, baseado nas tarefas SIPOC]
-                **Data:** [Data da Análise]
-
-                ## 1. Diagnóstico Geral do Processo
-                (Resumo de alto nível do que o processo faz, seu objetivo e seu contexto, baseado nos dados SIPOC.)
-
-                ## 2. Análise SWOT (Pontos Fortes e Fracos)
-
-                ### 2.1 Pontos Fortes
-                (Liste 2-3 aspectos positivos do fluxo atual, como clareza, automação percebida, ou baixa complexidade.)
-
-                ### 2.2 Pontos Fracos
-                (Liste 3-4 áreas problemáticas ou riscos de falha, baseadas nos dados BPMN e 5W2H.)
-
-                ## 3. Identificação de Desperdícios (Muda)
-                Identifique e descreva os principais desperdícios Lean (Muda) encontrados no fluxo (os 8 desperdícios). Use a tabela abaixo OBRIGATORIAMENTE:
-
-                | Tipo de Desperdício (Muda) | Localização no Processo (Tarefa) | Impacto no Tempo/Custo/Qualidade |
-                | :------------------------- | :------------------------------- | :------------------------------- |
-                | Ex: Espera                 | Tarefa 'Analisar Pedido'         | Atraso de X dias no tempo de ciclo|
-                | ...                        | ...                              | ...                              |
-                
-                ## 4. Gargalo Principal e Análise de Causa-Raiz
-
-                ### 4.1 Gargalo Principal
-                (Identifique a tarefa ou decisão que mais restringe o fluxo de valor e explique o porquê.)
-
-                ### 4.2 Análise de Causa-Raiz (5 Porquês)
-                Aplique a técnica dos 5 Porquês ao Gargalo Principal. Exponha a sequência de perguntas e a causa-raiz identificada.
-                * Por quê? [Primeira Resposta]
-                * Por quê? [Segunda Resposta]
-                * Por quê? [Terceira Resposta]
-                * Por quê? [Quarta Resposta]
-                * **Causa Raiz:** [Quinta Resposta/Causa Final]
-
-                ## 5. Plano de Ação Kaizen e Benefícios
-
-                ### 5.1 Área de Foco para Melhoria
-                (Defina uma única área de processo para focar a intervenção Kaizen.)
-
-                ### 5.2 Ação Kaizen Específica
-                (Sugira uma ação clara, objetiva e implementável para resolver a Causa Raiz.)
-
-                ### 5.3 Benefício Esperado
-                (Quantifique o ganho esperado em termos de redução de tempo de ciclo, custo, ou aumento de qualidade/satisfação.)
-
-                ## 6. Conclusão e Recomendações Estratégicas
-                
-                ### 6.1 Resumo Estratégico
-                Reforce os principais achados (gargalo, desperdícios, falhas críticas) e mostre o impacto geral no processo (tempo, custo, qualidade).
-
-                ### 6.2 Recomendações Práticas
-                Liste as ações priorizadas em um formato de checklist (usando listas Markdown para simular o checklist):
-                * [ ] Automatizar a Tarefa X.
-                * [ ] Padronizar a Tarefa Y.
-                * [ ] Criar treinamento para Z.
-
-                ### 6.3 Direcionamento Estratégico
-                Sugira os próximos passos para a implementação e monitoramento da melhoria (ex: piloto, indicadores, acompanhamento).
-
-                ### 6.4 Encerramento e Visão Lean
-                (Feche o relatório reforçando o compromisso com a melhoria contínua (Kaizen) e o foco em valor.)
-                `;
-
-                // 4. Montar a query dinâmica
-                const userQuery = generateAIPrompt(processData, xml);
-                
-                // 5. Chamar a API
-                const responseText = await callGeminiAPI(systemPrompt, userQuery);
-
-                // 6. Exibir resultados e armazenar
-                lastReportContent = responseText;
-                aiResults.innerHTML = marked.parse(responseText);
-                exportMarkdownBtn.disabled = false; // Habilita exportação
-
-            } catch (err) {
-                console.error("Erro na análise de IA:", err);
-                // Ajusta a mensagem de erro para ser mais amigável
-                aiError.textContent = `Erro ao analisar o processo. Detalhes: ${err.message}`;
-                document.getElementById('ai-error-message').textContent = `Detalhes: ${err.message}`;
-                aiError.style.display = 'block';
-                exportMarkdownBtn.disabled = true;
-            } finally {
-                aiLoading.style.display = 'none';
-                aiButton.disabled = false;
-            }
-        });
-
-        // ------------------------------------
-        // Lógica de Exportação
-        // ------------------------------------
-
-        exportMarkdownBtn.addEventListener('click', () => {
-            if (!lastReportContent) {
-                exportFeedback.textContent = "Por favor, gere a análise com IA antes de exportar.";
-                exportFeedback.classList.remove('text-green-600', 'text-red-600');
-                exportFeedback.classList.add('text-red-600');
-                exportFeedback.style.display = 'block';
-                setTimeout(() => exportFeedback.style.display = 'none', 3000);
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                aiError.classList.remove('hidden');
+                aiErrorMessage.textContent = 'Por favor, insira uma API Key do Gemini válida.';
                 return;
             }
 
-            // O conteúdo já está em Markdown (lastReportContent), basta criar o cabeçalho e disparar o download.
-            let markdownText = `# Relatório de Diagnóstico de Processo\n\n`;
-            markdownText += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n\n`;
-            markdownText += `--- Conteúdo do Relatório ---\n\n`;
-            markdownText += lastReportContent;
+            aiError.classList.add('hidden');
+            aiLoading.classList.remove('hidden');
+            aiResults.innerHTML = '';
 
-            // Dispara o download
-            const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `relatorio_diagnostico_processo_${Date.now()}.md`;
-            link.click();
+            const processData = collectProcessData();
+            const promptText = `Atue como um Especialista Lean UX e BPM. Analise os seguintes dados do processo e gere um relatório detalhado de diagnóstico Lean com pontos de melhoria, desperdícios e sugestões de otimização:
 
-            exportFeedback.textContent = "Relatório exportado com sucesso!";
-            exportFeedback.classList.remove('text-red-600');
-            exportFeedback.classList.add('text-green-600');
-            exportFeedback.style.display = 'block';
-            setTimeout(() => exportFeedback.style.display = 'none', 3000);
+Dados do Processo (BPMN):
+${JSON.stringify(processData.taskNames)}
+
+Dados SIPOC:
+${JSON.stringify(processData.sipocData)}
+
+Detalhamento 5W2H:
+${JSON.stringify(processData.detailedTasks)}`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptText }] }]
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error?.message || 'Erro ao comunicar com a API do Gemini.');
+                }
+
+                const markdownText = data.candidates[0].content.parts[0].text;
+                lastReportMarkdown = markdownText;
+
+                // Renderiza o Markdown retornado na tela
+                aiResults.innerHTML = marked.parse(markdownText);
+                exportMarkdownBtn.disabled = false;
+
+            } catch (err) {
+                aiError.classList.remove('hidden');
+                aiErrorMessage.textContent = err.message;
+            } finally {
+                aiLoading.classList.add('hidden');
+            }
         });
 
-
-        // ------------------------------------
-        // Lógica da API Gemini (Agora obtendo a chave do input)
-        // ------------------------------------
-        
-        async function fetchAPI(apiUrl, payload) {
-            // Tenta obter a chave do campo de input. Se estiver vazio, usa a chave injetada (se estiver no Canvas)
-            const apiKey = apiKeyInput.value.trim() || ""; 
-            const finalApiUrl = `${apiUrl}?key=${apiKey}`;
-
-            const response = await fetch(finalApiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.text();
-                // Tenta analisar o erro como JSON, se falhar, usa a string
-                let errorMessage = `Erro na API: ${response.status} ${response.statusText}.`;
-                try {
-                    const errorJson = JSON.parse(errorBody);
-                    // Adiciona a mensagem do corpo do erro
-                    errorMessage += ` Mensagem: ${errorJson.error?.message || 'Detalhes desconhecidos.'}`;
-                } catch (e) {
-                    errorMessage += ` Resposta: ${errorBody.substring(0, 100)}...`;
-                }
-                throw new Error(errorMessage);
-            }
-            
-            return await response.json();
-        }
-
-        async function callGeminiAPI(systemPrompt, userQuery) {
-            // Implementação de Backoff para garantir a resiliência da chamada
-            const MAX_RETRIES = 5;
-            let currentDelay = 1000; // 1 second
-
-            for (let i = 0; i < MAX_RETRIES; i++) {
-                try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent`;
-
-                    const payload = {
-                        systemInstruction: {
-                            parts: [{ text: systemPrompt }]
-                        },
-                        contents: [{
-                            parts: [{ text: userQuery }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.2,
-                            topP: 0.9,
-                            maxOutputTokens: 4096,
-                        }
-                    };
-
-                    const result = await fetchAPI(apiUrl, payload);
-                    
-                    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content?.parts?.[0]?.text) {
-                        return result.candidates[0].content.parts[0].text;
-                    } else {
-                        throw new Error("A resposta da IA está vazia ou em formato inválido.");
-                    }
-                } catch (error) {
-                    if (i === MAX_RETRIES - 1) {
-                        // Última tentativa falhou, lança o erro
-                        throw error;
-                    }
-                    // Implementa o backoff exponencial antes de tentar novamente
-                    await new Promise(resolve => setTimeout(resolve, currentDelay));
-                    currentDelay *= 2; // Dobra o delay para o próximo retry
-                }
-            }
-            // Deve ser inalcançável se o throw acima funcionar corretamente, mas para clareza:
-            throw new Error("Falha na chamada à API após múltiplas tentativas.");
-
-        }
-
-        // --- Inicialização ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Inicializa a navegação para a primeira etapa
-            irParaEtapa(0);
-
-            // Carrega um diagrama vazio ao iniciar (ou um exemplo se preferir, mas deixamos vazio por padrão)
-            modeler.createDiagram().catch(err => {
-                console.error('Erro ao criar diagrama inicial:', err);
-            });
+        exportMarkdownBtn.addEventListener('click', () => {
+            if (!lastReportMarkdown) return;
+            const blob = new Blob([lastReportMarkdown], { type: 'text/markdown;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'relatorio-diagnostico-lean.md';
+            link.click();
         });
     </script>
 </body>
