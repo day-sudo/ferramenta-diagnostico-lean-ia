@@ -11,37 +11,49 @@
     <!-- Carregamento do Tailwind CSS para estilos modernos -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Bibliotecas bpmn-js (Modelador BPMN) -->
+    <!-- 
+      Bibliotecas bpmn-js (Modelador BPMN) 
+    -->
+    <!-- CSS essencial para a paleta e diagramas (diagram-js) -->
     <link rel="stylesheet" href="https://unpkg.com/diagram-js@14.3.0/assets/diagram-js.css">
+    <!-- CSS para os ícones da paleta BPMN -->
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.1.0/dist/assets/bpmn-font/css/bpmn.css">
+    <!-- CSS específico do bpmn-js -->
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.1.0/dist/assets/bpmn-js.css">
+    <!-- Script principal do modelador -->
     <script src="https://unpkg.com/bpmn-js@17.1.0/dist/bpmn-modeler.development.js"></script>
 
     <!-- Biblioteca para renderizar Markdown (para a resposta da IA) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
+        /* Estilos customizados para garantir que o menu fique centralizado e responsivo */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f8fafc; /* light blue-gray background */
         }
         .etapa-btn {
+            /* Forçando a cor de fundo e a transição para o hover */
             transition: all 0.3s ease;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-            white-space: nowrap;
+            white-space: nowrap; /* Evita quebras de linha em telas pequenas */
         }
         .seta {
-            color: #94a3b8;
+            /* Cor mais sutil para o indicador de progresso */
+            color: #94a3b8; /* slate-400 */
         }
+        /* Estilo para garantir que o conteúdo da etapa se destaque */
         .conteudo-etapa {
             min-height: 200px;
         }
+        /* Estilos para o canvas do BPMN */
         #bpmn-canvas {
             width: 100%;
             height: 600px;
             border: 1px solid #ccc;
             background-color: #fafafa;
         }
+        /* Estilo para a paleta do BPMN (barra de ferramentas) */
         .djs-palette {
             background-color: #fdfdfd;
             border: 1px solid #ccc;
@@ -57,32 +69,41 @@
             Ferramenta de Diagnóstico Lean: Painel Central
         </h1>
 
-        <!-- Menu de Etapas -->
+        <!-- Menu de Etapas Refinado (usando flexbox e classes Tailwind) -->
         <div id="menuEtapas" class="flex flex-wrap justify-center items-center gap-2 md:gap-4 bg-white p-4 rounded-xl shadow-2xl mb-8">
+
+            <!-- Etapa 1: BPMN -->
             <button id="btn-0" class="etapa-btn flex items-center text-white font-medium py-2 px-4 rounded-full" onclick="irParaEtapa(0)">
                 1️⃣ BPMN (Processo)
             </button>
             <span class="seta text-3xl font-light leading-none hidden md:block">→</span>
 
+            <!-- Etapa 2: SIPOC -->
             <button id="btn-1" class="etapa-btn flex items-center text-white font-medium py-2 px-4 rounded-full" onclick="irParaEtapa(1)">
                 2️⃣ SIPOC (Escopo)
             </button>
             <span class="seta text-3xl font-light leading-none hidden md:block">→</span>
 
+            <!-- Etapa 3: 5W2H -->
             <button id="btn-2" class="etapa-btn flex items-center text-white font-medium py-2 px-4 rounded-full" onclick="irParaEtapa(2)">
                 3️⃣ 5W2H (Ação)
             </button>
             <span class="seta text-3xl font-light leading-none hidden md:block">→</span>
 
+            <!-- Etapa 4: IA Lean -->
             <button id="btn-3" class="etapa-btn flex items-center text-white font-medium py-2 px-4 rounded-full" onclick="irParaEtapa(3)">
                 4️⃣ IA Lean (Análise)
             </button>
+            
+            <!-- REMOVIDO: Etapa 5 (Documentação) -->
         </div>
 
         <!-- Container de Conteúdo das Etapas -->
         <div id="conteudoEtapas" class="bg-white shadow-lg rounded-b-xl overflow-hidden">
 
-            <!-- Etapa 1: BPMN -->
+            <!-- =================================== -->
+            <!-- Etapa 1: BPMN (Funcional)           -->
+            <!-- =================================== -->
             <div id="etapa-bpmn" class="conteudo-etapa p-6 bg-white border-t-8 border-indigo-600 rounded-xl shadow-2xl transition duration-500">
                 <h2 class="text-2xl font-bold text-indigo-700 mb-4">Etapa 1: Mapeamento de Processos (BPMN)</h2>
                 <p class="mb-4 text-gray-700">Use a paleta à esquerda para desenhar seu processo ou carregue um exemplo. Suas tarefas serão usadas nas próximas etapas de análise.</p>
@@ -90,27 +111,36 @@
                     <button id="load-example-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">Carregar Exemplo</button>
                     <button id="save-xml-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Salvar XML</button>
                 </div>
-                <div id="bpmn-canvas" class="rounded-lg relative"></div>
+                <!-- O container do canvas BPMN -->
+                <div id="bpmn-canvas" class="rounded-lg relative">
+                    <!-- O modelador BPMN será injetado aqui -->
+                </div>
             </div>
 
-            <!-- Etapa 2: SIPOC -->
+            <!-- =================================== -->
+            <!-- Etapa 2: SIPOC (Funcional - NOVO DESIGN) -->
+            <!-- =================================== -->
             <div id="etapa-sipoc" class="conteudo-etapa p-6 md:p-8 bg-white border-t-8 border-purple-600 rounded-xl shadow-2xl transition duration-500 hidden">
                 <h2 class="text-2xl font-bold text-purple-700 mb-4">Etapa 2: Definição do Escopo (SIPOC)</h2>
                 <p class="mb-6 text-gray-700">O campo "Processo" é preenchido automaticamente com as tarefas do seu BPMN. Preencha os campos restantes para contextualizar a IA.</p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    
+                    <!-- S: Suppliers - Azul Claro -->
                     <div class="p-4 rounded-xl border-t-4 border-blue-600 bg-blue-50 shadow-md">
                         <h3 class="text-xl font-extrabold text-blue-700 mb-2">S - Fornecedores</h3>
                         <p class="text-xs text-blue-600 mb-3">Quem fornece as entradas?</p>
                         <textarea id="sipoc-s" rows="5" class="mt-1 block w-full rounded-lg border border-blue-300 shadow-inner focus:border-blue-500 focus:ring-blue-500 p-2 bg-white text-sm"></textarea>
                     </div>
 
+                    <!-- I: Inputs - Verde Claro -->
                     <div class="p-4 rounded-xl border-t-4 border-green-600 bg-green-50 shadow-md">
                         <h3 class="text-xl font-extrabold text-green-700 mb-2">I - Entradas</h3>
                         <p class="text-xs text-green-600 mb-3">O que é necessário para o processo?</p>
                         <textarea id="sipoc-i" rows="5" class="mt-1 block w-full rounded-lg border border-green-300 shadow-inner focus:border-green-500 focus:ring-green-500 p-2 bg-white text-sm"></textarea>
                     </div>
 
+                    <!-- P: Process - Amarelo Claro (Auto-populated) -->
                     <div class="p-4 rounded-xl border-t-4 border-yellow-600 bg-yellow-50 shadow-md">
                         <h3 class="text-xl font-extrabold text-yellow-700 mb-2">P - Processo</h3>
                         <p class="text-xs text-yellow-600 mb-3">(Extraído do BPMN)</p>
@@ -119,12 +149,14 @@
                         </ul>
                     </div>
 
+                    <!-- O: Outputs - Laranja Claro -->
                     <div class="p-4 rounded-xl border-t-4 border-orange-600 bg-orange-50 shadow-md">
                         <h3 class="text-xl font-extrabold text-orange-700 mb-2">O - Saídas</h3>
                         <p class="text-xs text-orange-600 mb-3">O que o processo entrega?</p>
                         <textarea id="sipoc-o" rows="5" class="mt-1 block w-full rounded-lg border border-orange-300 shadow-inner focus:border-orange-500 focus:ring-orange-500 p-2 bg-white text-sm"></textarea>
                     </div>
 
+                    <!-- C: Customers - Roxo Claro -->
                     <div class="p-4 rounded-xl border-t-4 border-purple-600 bg-purple-50 shadow-md">
                         <h3 class="text-xl font-extrabold text-purple-700 mb-2">C - Clientes</h3>
                         <p class="text-xs text-purple-600 mb-3">Quem recebe as saídas?</p>
@@ -133,7 +165,9 @@
                 </div>
             </div>
 
-            <!-- Etapa 3: 5W2H -->
+            <!-- =================================== -->
+            <!-- Etapa 3: 5W2H (Funcional)           -->
+            <!-- =================================== -->
             <div id="etapa-5w2h" class="conteudo-etapa p-6 md:p-8 bg-white border-t-8 border-teal-600 rounded-xl shadow-2xl transition duration-500 hidden">
                 <h2 class="text-2xl font-bold text-teal-700 mb-4">Etapa 3: Detalhamento de Ação (5W2H)</h2>
                 <p class="mb-4 text-gray-700">Selecione uma tarefa mapeada no BPMN para detalhar o seu estado atual (AS IS), coletando dados essenciais para a IA.</p>
@@ -149,40 +183,47 @@
                     <h3 id="5w2h-task-title" class="text-xl font-bold text-teal-800 mb-6 border-b pb-2">Analisando: [Nome da Tarefa]</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- What -->
                         <div>
                             <label for="5w2h-what" class="block text-sm font-medium text-gray-700">1. O Quê (What)</label>
                             <input type="text" id="5w2h-what" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2 border">
                             <p class="text-xs text-gray-500 mt-1">O que exatamente é feito nesta tarefa?</p>
                         </div>
+                        <!-- Why -->
                         <div>
                             <label for="5w2h-why" class="block text-sm font-medium text-gray-700">2. Por Quê (Why)</label>
                             <input type="text" id="5w2h-why" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2 border">
-                            <p class="text-xs text-gray-500 mt-1">Por que esta tarefa é necessária?</p>
+                            <p class="text-xs text-gray-500 mt-1">Por que esta tarefa é necessária? (Valor)</p>
                         </div>
+                        <!-- Who -->
                         <div>
                             <label for="5w2h-who" class="block text-sm font-medium text-gray-700">3. Quem (Who)</label>
                             <input type="text" id="5w2h-who" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2 border">
-                            <p class="text-xs text-gray-500 mt-1">Quem é responsável por executar?</p>
+                            <p class="text-xs text-gray-500 mt-1">Quem é responsável por executar a tarefa?</p>
                         </div>
+                        <!-- Where -->
                         <div>
                             <label for="5w2h-where" class="block text-sm font-medium text-gray-700">4. Onde (Where)</label>
                             <input type="text" id="5w2h-where" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2 border">
-                            <p class="text-xs text-gray-500 mt-1">Onde (sistema ou local) é executada?</p>
+                            <p class="text-xs text-gray-500 mt-1">Onde (sistema, local físico) a tarefa é executada?</p>
                         </div>
+                        <!-- When -->
                         <div>
                             <label for="5w2h-when" class="block text-sm font-medium text-gray-700">5. Quando (When)</label>
                             <input type="text" id="5w2h-when" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2 border">
-                            <p class="text-xs text-gray-500 mt-1">Quando (frequência/momento) é executada?</p>
+                            <p class="text-xs text-gray-500 mt-1">Quando (frequência, momento do ciclo) é executada?</p>
                         </div>
+                        <!-- How -->
                         <div>
                             <label for="5w2h-how" class="block text-sm font-medium text-gray-700">6. Como (How)</label>
                             <input type="text" id="5w2h-how" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2 border">
-                            <p class="text-xs text-gray-500 mt-1">Como (método/ferramenta) é feita?</p>
+                            <p class="text-xs text-gray-500 mt-1">Como (método, ferramentas) a tarefa é feita?</p>
                         </div>
+                        <!-- How Much -->
                         <div class="md:col-span-2">
                             <label for="5w2h-how-much" class="block text-sm font-medium text-gray-700">7. Quanto Custa/Tempo (How Much)</label>
                             <input type="text" id="5w2h-how-much" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 p-2 border">
-                            <p class="text-xs text-gray-500 mt-1">Qual o custo estimado ou tempo médio?</p>
+                            <p class="text-xs text-gray-500 mt-1">Qual o custo estimado ou o tempo médio de ciclo desta tarefa?</p>
                         </div>
                     </div>
 
@@ -190,71 +231,97 @@
                         <button id="save-5w2h-btn" class="px-6 py-2 bg-teal-600 text-white font-semibold rounded-md hover:bg-teal-700 transition-colors shadow-md">
                             Salvar Dados 5W2H
                         </button>
-                        <span id="5w2h-save-feedback" class="text-sm text-green-600 font-semibold hidden">
-                            ✅ Dados salvos com sucesso!
+                        <span id="5w2h-save-feedback" class="text-sm text-green-600 font-semibold" style="display: none;">
+                            ✅ Dados salvos!
                         </span>
                     </div>
                 </div>
             </div>
             
-            <!-- Etapa 4: IA Lean -->
+            <!-- =================================== -->
+            <!-- Etapa 4: IA Lean (Funcional)        -->
+            <!-- =================================== -->
             <div id="etapa-ia" class="conteudo-etapa p-6 md:p-8 bg-white border-t-8 border-pink-600 rounded-xl shadow-2xl transition duration-500 hidden">
                 <h2 class="text-2xl font-bold text-pink-700 mb-4">Etapa 4: Análise Acelerada (IA Lean)</h2>
                 <p class="mb-4 text-gray-700">A IA irá processar o diagrama BPMN, os dados SIPOC e o detalhamento 5W2H para gerar o relatório de diagnóstico profissional.</p>
 
+                <!-- Input de API Key (Opicional/Fallback) -->
                 <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
-                    <p class="font-medium">🛠️ **API Key do Gemini:**</p>
-                    <p class="text-sm">Insira sua chave de API do Gemini para processar a análise:</p>
-                    <input type="password" id="api-key-input" placeholder="Cole sua Gemini API Key aqui" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 p-2 text-gray-900 border">
+                    <p class="font-medium">🛠️ **API Key (Opcional):**</p>
+                    <p class="text-sm">Se esta ferramenta não estiver rodando no Canvas, insira sua Gemini API Key aqui para a análise funcionar:</p>
+                    <input type="text" id="api-key-input" placeholder="SUA_GEMINI_API_KEY_AQUI" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 p-2 text-gray-900 border">
                 </div>
                 
                 <div class="flex flex-wrap gap-4 items-center">
                     <button id="analyze-ai-btn" class="px-6 py-3 bg-pink-600 text-white font-bold rounded-xl hover:bg-pink-700 transition-colors shadow-lg">
                         🚀 Iniciar Análise de IA
                     </button>
-                    <button id="export-markdown-btn" class="px-6 py-3 bg-gray-600 text-white font-bold rounded-xl hover:bg-gray-700 transition-colors shadow-lg disabled:opacity-50" disabled>
+                    <button id="export-markdown-btn" class="px-6 py-3 bg-gray-600 text-white font-bold rounded-xl hover:bg-gray-700 transition-colors shadow-lg" disabled>
                         💾 Exportar Relatório (Markdown)
                     </button>
                     <span id="ai-loading" class="text-pink-600 font-semibold hidden ml-4">
-                        Aguarde, gerando relatório de diagnóstico...
+                        Aguarde, analisando dados e gerando relatório... (Isso pode levar alguns segundos)
                     </span>
-                    <span id="export-feedback" class="text-sm font-semibold ml-4 hidden text-green-600"></span>
+                    <span id="export-feedback" class="text-sm font-semibold ml-4 hidden"></span>
                 </div>
 
+                <!-- Exibição de Erros -->
                 <div id="ai-error" class="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden" role="alert">
                     <p class="font-bold">Erro na Análise:</p>
                     <p id="ai-error-message" class="text-sm mt-1">Detalhes do erro.</p>
                 </div>
 
-                <div id="ai-results" class="mt-6 p-6 border rounded-xl bg-gray-50 prose prose-lg max-w-none prose-h3:text-pink-700 prose-ul:list-disc prose-ul:pl-6">
+                <!-- Resultados da IA (Renderizado como Markdown) -->
+                <div id="ai-results" class="mt-6 prose prose-lg max-w-none prose-h3:text-pink-700 prose-ul:list-disc prose-ul:pl-6 prose-li:my-1">
                     <p class="text-gray-500 italic">O relatório de diagnóstico profissional será exibido aqui após a análise da IA.</p>
                 </div>
             </div>
 
+            <!-- FIM DAS ETAPAS -->
+            
+
         </div>
     </div>
 
+    <!-- =================================== -->
+    <!-- NOVO: Rodapé Profissional (Footer)  -->
+    <!-- =================================== -->
     <footer class="mt-12 w-full max-w-6xl mx-auto rounded-t-xl overflow-hidden shadow-2xl">
+        <!-- Parte Superior (Azul/Cinza Gradiente) -->
         <div class="bg-gradient-to-r from-blue-700 to-gray-800 p-6 text-center text-white">
-            <p class="font-bold text-lg">© 2025 Daiane Nicácio. Todos os direitos reservados.</p>
-            <p class="text-sm text-blue-100 mt-2">Gestão da Mudança Organizacional • Projetos Ágeis • Transformação Digital</p>
+            <p class="font-bold text-lg">
+                © 2025 Daiane Nicácio. Todos os direitos reservados.
+            </p>
+            <p class="text-sm text-blue-100 mt-2">
+                Gestão da Mudança Organizacional • Projetos Ágeis • Transformação Digital
+            </p>
         </div>
+        <!-- Parte Inferior (Preta) -->
         <div class="bg-gray-900 p-4 text-center">
-            <p class="text-sm text-gray-400">Desenvolvido com foco em resultados e transformações sustentáveis</p>
+            <p class="text-sm text-gray-400">
+                Desenvolvido com foco em resultados e transformações sustentáveis
+            </p>
         </div>
     </footer>
 
+    <!-- =G================================= -->
+    <!-- JAVASCRIPT                          -->
+    <!-- Removido 'type="module"' para garantir que irParaEtapa seja acessível globalmente -->
+    <!-- =================================== -->
     <script>
         // Instância global do BpmnJS
         const modeler = new BpmnJS({
             container: '#bpmn-canvas',
-            keyboard: { bindTo: window }
+            keyboard: {
+                bindTo: window
+            }
         });
 
-        let dataStore5W2H = {};
+        // Armazenamento em memória dos dados 5W2H
+        let dataStore5W2H = {}; // Ex: { 'Task_123id': { what: '...', ... } }
         let currentSelectedTaskId = null;
-        let lastReportContent = '';
-        let currentEtapaIndex = 0;
+        let lastReportContent = ''; // Para armazenar o último relatório HTML gerado
+        let currentEtapaIndex = 0; // Estado da navegação
 
         // Elementos UI
         const aiButton = document.getElementById('analyze-ai-btn');
@@ -263,11 +330,11 @@
         const aiResults = document.getElementById('ai-results');
         const exportMarkdownBtn = document.getElementById('export-markdown-btn');
         const exportFeedback = document.getElementById('export-feedback');
-        const apiKeyInput = document.getElementById('api-key-input');
+        const apiKeyInput = document.getElementById('api-key-input'); // NOVO ELEMENTO
 
-        // XML de exemplo inicial
+        // XML de exemplo
         const exampleXML = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
   <bpmn:process id="Process_1" isExecutable="false">
     <bpmn:startEvent id="StartEvent_1" name="Pedido Recebido">
       <bpmn:outgoing>Flow_1</bpmn:outgoing>
@@ -277,15 +344,35 @@
       <bpmn:outgoing>Flow_2</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:task id="Task_2" name="Processar Pagamento">
+    <bpmn:exclusiveGateway id="Gateway_1" name="Pedido Aprovado?">
       <bpmn:incoming>Flow_2</bpmn:incoming>
       <bpmn:outgoing>Flow_3</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="Task_2" />
-    <bpmn:endEvent id="EndEvent_1" name="Pedido Finalizado">
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="Gateway_1" />
+    <bpmn:task id="Task_2" name="Notificar Rejeição">
       <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_3" name="Não" sourceRef="Gateway_1" targetRef="Task_2" />
+    <bpmn:task id="Task_3" name="Processar Pagamento">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_4" name="Sim" sourceRef="Gateway_1" targetRef="Task_3" />
+    <bpmn:endEvent id="EndEvent_1" name="Pedido Rejeitado">
+      <bpmn:incoming>Flow_5</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_2" targetRef="EndEvent_1" />
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_2" targetRef="EndEvent_1" />
+    <bpmn:task id="Task_4" name="Enviar Produto">
+      <bpmn:incoming>Flow_6</incoming>
+      <bpmn:outgoing>Flow_7</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_3" targetRef="Task_4" />
+    <bpmn:endEvent id="EndEvent_2" name="Pedido Concluído">
+      <bpmn:incoming>Flow_7</incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="Task_4" targetRef="EndEvent_2" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
@@ -293,27 +380,42 @@
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
 
+        /**
+         * Carrega e exibe um diagrama BPMN no modelador.
+         * @param {string} xml - O XML do BPMN.
+         */
         async function loadDiagram(xml) {
             try {
                 await modeler.importXML(xml);
                 const canvas = modeler.get('canvas');
                 canvas.zoom('fit-viewport');
+                console.log('Diagrama carregado com sucesso!');
             } catch (err) {
-                console.error('Erro ao carregar BPMN:', err);
+                console.error('Erro ao carregar diagrama BPMN:', err);
             }
         }
-
+        
+        /**
+         * Obtém todas as tarefas (UserTasks, Tasks) do diagrama.
+         * @returns {Array} - Um array de elementos de tarefa.
+         */
         function getTasksFromModeler() {
             const elementRegistry = modeler.get('elementRegistry');
+            // Filtra por tipos de tarefa
             return elementRegistry.filter(el => 
                 el.type === 'bpmn:Task' || el.type === 'bpmn:UserTask' || el.type === 'bpmn:ServiceTask'
             );
         }
 
+        /**
+         * Coleta e estrutura todos os dados de BPMN, SIPOC e 5W2H.
+         */
         function collectProcessData() {
+            // 1. Coleta Tarefas BPMN
             const bpmnTasks = getTasksFromModeler();
             const taskNames = bpmnTasks.map(t => t.businessObject.name || t.id);
 
+            // 2. Coleta dados SIPOC
             const sipocData = {
                 suppliers: document.getElementById('sipoc-s').value,
                 inputs: document.getElementById('sipoc-i').value,
@@ -322,25 +424,44 @@
                 customers: document.getElementById('sipoc-c').value
             };
 
+            // 3. Coleta dados 5W2H (apenas tarefas com dados preenchidos)
             const detailedTasks = Object.keys(dataStore5W2H)
                 .map(taskId => {
+                    // Encontra o nome da tarefa no modelo
                     const taskElement = bpmnTasks.find(t => t.id === taskId);
                     const taskName = taskElement ? (taskElement.businessObject.name || taskId) : taskId;
+                    
                     const data = dataStore5W2H[taskId];
+                    // Verifica se pelo menos um campo 5W2H foi preenchido
                     if (Object.values(data).some(val => val && val.trim() !== '')) {
-                        return { name: taskName, ...data };
+                        return {
+                            name: taskName,
+                            ...data
+                        };
                     }
                     return null;
                 })
-                .filter(Boolean);
-
-            return { taskNames, sipocData, detailedTasks };
+                .filter(Boolean); // Remove nulos/vazios
+            
+            return {
+                taskNames,
+                sipocData,
+                detailedTasks
+            };
         }
 
-        function irParaEtapa(indice) {
-            const etapas = ['bpmn', 'sipoc', '5w2h', 'ia'];
-            currentEtapaIndex = indice;
 
+        // ------------------------------------
+        // Lógica de Navegação Progressiva (irParaEtapa)
+        // ------------------------------------
+        
+        // Função para alternar a exibição das etapas e atualizar o estado do menu
+        function irParaEtapa(indice) {
+            const etapas = ['bpmn', 'sipoc', '5w2h', 'ia']; // REMOVIDO: 'documentacao'
+            const totalEtapas = etapas.length;
+            currentEtapaIndex = indice; // Atualiza o índice global
+
+            // 1. Mostrar/Esconder o Conteúdo da Etapa
             etapas.forEach((id, i) => {
                 const contentDiv = document.getElementById(`etapa-${id}`);
                 if (contentDiv) {
@@ -348,24 +469,37 @@
                 }
             });
 
-            for (let i = 0; i < etapas.length; i++) {
+            // 2. Atualizar o Estilo do Botão Ativo (Feedback visual)
+            for (let i = 0; i < totalEtapas; i++) {
                 const btn = document.getElementById(`btn-${i}`);
                 if (btn) {
                     if (i === indice) {
-                        btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-                        btn.classList.add('bg-indigo-700', 'ring-4', 'ring-indigo-300');
+                        // Estilo Ativo: cor principal, anel de foco (ring), sombra maior
+                        btn.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
+                        btn.classList.add('bg-indigo-700', 'ring-4', 'ring-indigo-300', 'ring-offset-2', 'shadow-lg');
                     } else {
-                        btn.classList.remove('bg-indigo-700', 'ring-4', 'ring-indigo-300');
-                        btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                        // Estilo Inativo: cor secundária/padrão
+                        btn.classList.remove('bg-indigo-700', 'ring-4', 'ring-indigo-300', 'ring-offset-2', 'shadow-lg');
+                        btn.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
                     }
                 }
             }
 
-            if (etapas[indice] === 'sipoc') updateSipocTab();
-            if (etapas[indice] === '5w2h') update5w2hTab();
+            // Ações específicas ao trocar de aba (carregar dados dinâmicos)
+            const currentTabId = etapas[indice];
+            if (currentTabId === 'sipoc') {
+                updateSipocTab();
+            } else if (currentTabId === '5w2h') {
+                update5w2hTab();
+            }
         }
 
-        document.getElementById('load-example-btn').addEventListener('click', () => loadDiagram(exampleXML));
+        // ------------------------------------
+        // Lógica da Etapa BPMN
+        // ------------------------------------
+        document.getElementById('load-example-btn').addEventListener('click', () => {
+            loadDiagram(exampleXML);
+        });
 
         document.getElementById('save-xml-btn').addEventListener('click', async () => {
             try {
@@ -380,10 +514,13 @@
             }
         });
 
+        // ------------------------------------
+        // Lógica da Etapa SIPOC
+        // ------------------------------------
         function updateSipocTab() {
             const tasks = getTasksFromModeler();
             const processList = document.getElementById('sipoc-p');
-            processList.innerHTML = '';
+            processList.innerHTML = ''; // Limpa a lista
             
             if (tasks.length === 0) {
                 processList.innerHTML = '<li class="text-gray-500 italic">Nenhuma tarefa encontrada no diagrama.</li>';
@@ -391,12 +528,16 @@
             }
 
             tasks.forEach(task => {
+                const taskName = task.businessObject.name || `(Tarefa sem nome - ID: ${task.id})`;
                 const li = document.createElement('li');
-                li.textContent = task.businessObject.name || `(Sem nome - ID: ${task.id})`;
+                li.textContent = taskName;
                 processList.appendChild(li);
             });
         }
 
+        // ------------------------------------
+        // Lógica da Etapa 5W2H
+        // ------------------------------------
         const taskSelect = document.getElementById('task-select');
         const form5w2h = document.getElementById('5w2h-form');
         const taskTitle5w2h = document.getElementById('5w2h-task-title');
@@ -405,20 +546,25 @@
 
         function update5w2hTab() {
             const tasks = getTasksFromModeler();
-            taskSelect.innerHTML = '<option value="">-- Selecione uma tarefa --</option>';
+            taskSelect.innerHTML = '<option value="">-- Selecione uma tarefa --</option>'; // Reseta
             
             tasks.forEach(task => {
+                const taskName = task.businessObject.name || `(Tarefa sem nome - ID: ${task.id})`;
                 const option = document.createElement('option');
                 option.value = task.id;
-                option.textContent = task.businessObject.name || `(Sem nome - ID: ${task.id})`;
+                option.textContent = taskName;
                 taskSelect.appendChild(option);
             });
 
+            // Restaura a seleção se já houver uma
             if (currentSelectedTaskId) {
                 taskSelect.value = currentSelectedTaskId;
             }
+            // Dispara o evento de change para carregar o formulário, caso haja uma seleção
+            taskSelect.dispatchEvent(new Event('change'));
         }
 
+        // Evento ao selecionar uma tarefa no dropdown
         taskSelect.addEventListener('change', (e) => {
             currentSelectedTaskId = e.target.value;
             if (!currentSelectedTaskId) {
@@ -426,13 +572,18 @@
                 return;
             }
 
+            // Popula o título
             const selectedOption = taskSelect.options[taskSelect.selectedIndex];
-            taskTitle5w2h.textContent = `Analisando: "${selectedOption.textContent}"`;
+            const taskName = selectedOption.textContent; // Usar o texto da opção
+            taskTitle5w2h.textContent = `Analisando: "${taskName}"`;
 
+
+            // Garante que o objeto para a tarefa exista no dataStore
             if (!dataStore5W2H[currentSelectedTaskId]) {
-                dataStore5W2H[currentSelectedTaskId] = {};
+                 dataStore5W2H[currentSelectedTaskId] = {};
             }
 
+            // Carrega dados salvos, se existirem
             const data = dataStore5W2H[currentSelectedTaskId];
             document.getElementById('5w2h-what').value = data.what || '';
             document.getElementById('5w2h-why').value = data.why || '';
@@ -442,138 +593,312 @@
             document.getElementById('5w2h-how').value = data.how || '';
             document.getElementById('5w2h-how-much').value = data.howMuch || '';
 
+            // Exibe o formulário
             form5w2h.classList.remove('hidden');
-            saveFeedback.classList.add('hidden');
+            saveFeedback.style.display = 'none';
         });
 
+        // Evento ao salvar o formulário 5W2H
         saveButton5w2h.addEventListener('click', () => {
             if (!currentSelectedTaskId) return;
 
             dataStore5W2H[currentSelectedTaskId] = {
-                what: document.getElementById('5w2h-what').value,
-                why: document.getElementById('5w2h-why').value,
-                who: document.getElementById('5w2h-who').value,
-                where: document.getElementById('5w2h-where').value,
-                when: document.getElementById('5w2h-when').value,
-                how: document.getElementById('5w2h-how').value,
-                howMuch: document.getElementById('5w2h-how-much').value
+                what: document.getElementById('5w2h-what').value.trim(),
+                why: document.getElementById('5w2h-why').value.trim(),
+                who: document.getElementById('5w2h-who').value.trim(),
+                where: document.getElementById('5w2h-where').value.trim(),
+                when: document.getElementById('5w2h-when').value.trim(),
+                how: document.getElementById('5w2h-how').value.trim(),
+                howMuch: document.getElementById('5w2h-how-much').value.trim(),
             };
-
-            saveFeedback.classList.remove('hidden');
-            setTimeout(() => saveFeedback.classList.add('hidden'), 3000);
+            
+            console.log('Dados 5W2H salvos:', dataStore5W2H);
+            
+            // Feedback visual
+            saveFeedback.style.display = 'block';
+            setTimeout(() => {
+                saveFeedback.style.display = 'none';
+            }, 2000);
         });
 
         // ------------------------------------
-        // GERAÇÃO DO RELATÓRIO DE IA (GEMINI)
+        // Lógica da Etapa IA Lean
         // ------------------------------------
+        
+        /**
+         * Monta a query final do usuário com todos os dados estruturados.
+         */
+        function generateAIPrompt(processData, xml) {
+            const detailedTasksString = processData.detailedTasks.length > 0 ? 
+                processData.detailedTasks.map(tarefa => `
+Tarefa: ${tarefa.name}
+- O quê (What): ${tarefa.what || 'Não preenchido'}
+- Por quê (Why): ${tarefa.why || 'Não preenchido'}
+- Quem (Who): ${tarefa.who || 'Não preenchido'}
+- Onde (Where): ${tarefa.where || 'Não preenchido'}
+- Quando (When): ${tarefa.when || 'Não preenchido'}
+- Como (How): ${tarefa.how || 'Não preenchido'}
+- Quanto (How Much): ${tarefa.howMuch || 'Não preenchido'}
+`).join('\n')
+            : 'Nenhum dado 5W2H detalhado foi fornecido para as tarefas.';
+
+            return `
+Aqui estão os dados para análise:
+
+## 1. Processo BPMN (XML)
+\`\`\`xml
+${xml}
+\`\`\`
+
+## 2. Contexto SIPOC
+- Fornecedores (Suppliers): ${processData.sipocData.suppliers || 'Não preenchido'}
+- Entradas (Inputs): ${processData.sipocData.inputs || 'Não preenchido'}
+- Processo: ${processData.sipocData.process}
+- Saídas (Outputs): ${processData.sipocData.outputs || 'Não preenchido'}
+- Clientes (Customers): ${processData.sipocData.customers || 'Não preenchido'}
+
+## 3. Detalhamento 5W2H das Tarefas
+${detailedTasksString}
+
+---
+🔍 Objetivo da análise (Sistema):
+Utilize metodologias Lean Manufacturing e Six Sigma para identificar desperdícios (Muda), gargalos, falhas de controle e oportunidades de melhoria. Gere um Relatório de Diagnóstico e Otimização completo e estruturado de acordo com as instruções do 'System Instruction'.
+`;
+        }
+
         aiButton.addEventListener('click', async () => {
-            const apiKey = apiKeyInput.value.trim();
-            if (!apiKey) {
-                aiError.classList.remove('hidden');
-                document.getElementById('ai-error-message').textContent = 'Insira uma API Key válida do Gemini para realizar a análise.';
-                return;
-            }
-
-            aiError.classList.add('hidden');
-            aiLoading.classList.remove('hidden');
+            aiLoading.style.display = 'block';
+            aiResults.innerHTML = '';
+            aiError.style.display = 'none';
             aiButton.disabled = true;
-
-            const processData = collectProcessData();
-
-            const prompt = `Você é um Consultor Especialista em Lean UX, Excelência Operacional e Transformação Digital.
-Com base nos dados fornecidos abaixo, elabore um Relatório de Diagnóstico Lean abrangente, estruturado e altamente profissional.
-
---- DADOS DO PROCESSO ---
-Fluxo BPMN (Tarefas): ${processData.taskNames.join(' -> ')}
-
-Matriz SIPOC:
-- Fornecedores (S): ${processData.sipocData.suppliers || 'Não informado'}
-- Entradas (I): ${processData.sipocData.inputs || 'Não informado'}
-- Processo (P): ${processData.sipocData.process}
-- Saídas (O): ${processData.sipocData.outputs || 'Não informado'}
-- Clientes (C): ${processData.sipocData.customers || 'Não informado'}
-
-Detalhamento 5W2H das Tarefas:
-${JSON.stringify(processData.detailedTasks, null, 2)}
-
---- ESTRUTURA DO RELATÓRIO REQUERIDA ---
-# Relatório de Diagnóstico Lean & Eficiência de Processos
-
-## 1. Resumo Executivo
-Proporcione uma visão geral da saúde do processo atual e os principais pontos de atenção.
-
-## 2. Análise de Oportunidades & Eliminação de Desperdícios
-Identifique gargalos, retrabalhos, tempos mortos ou desperdícios (segundo a filosofia Lean) com base nos dados.
-
-## 3. Avaliação de Agregação de Valor (VA vs. NVA)
-Análise crítica do que agrega valor real ao cliente e do que pode ser simplificado ou automatizado.
-
-## 4. Plano de Ação & Recomendações
-Ações prioritárias sugeridas em formato tabular ou lista estruturada para otimização do fluxo.
-
-Escreva com linguagem clara, profissional e bem formatada em Markdown.`;
+            exportMarkdownBtn.disabled = true; // Desabilita exportação
+            lastReportContent = '';
 
             try {
-        // Chamada atualizada com o modelo 'gemini-2.5-flash'
-        // Linha corrigida:
-const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        contents: [
-            {
-                parts: [
-                    { text: prompt }
-                ]
-            }
-        ]
-    })
-});
+                // 1. Obter o XML do BPMN
+                const { xml } = await modeler.saveXML({ format: true });
+                
+                // 2. Coletar e estruturar todos os dados
+                const processData = collectProcessData();
 
-const data = await response.json();
+                // 3. Sistema Prompt (NOVO: Estrutura detalhada do relatório)
+                const systemPrompt = `Você é um consultor especialista em Lean Manufacturing, Seis Sigma e Otimização de Processos (BPM). Sua tarefa é analisar o processo de negócio descrito abaixo e gerar um Relatório de Diagnóstico e Otimização completo, utilizando a metodologia Lean e Six Sigma.
 
-if (!response.ok) {
-    throw new Error(data.error?.message || 'Falha ao conectar com a API do Gemini.');
-}
+                O relatório DEVE ser gerado estritamente em Markdown e seguir a estrutura exata e a ordem abaixo. Utilize os dados de BPMN, SIPOC e 5W2H fornecidos para preencher cada seção com insights específicos.
 
-if (!data.candidates || !data.candidates.length) {
-    throw new Error('Resposta da IA vazia ou inválida.');
-}
+                # RELATÓRIO DE DIAGNÓSTICO E OTIMIZAÇÃO DE PROCESSOS
 
-const markdownContent = data.candidates[0]?.content?.parts?.[0]?.text || 'Sem resposta da IA.';
+                **Consultor:** [Seu Nome]
+                **Processo Analisado:** [Nome do Processo, baseado nas tarefas SIPOC]
+                **Data:** [Data da Análise]
 
-                // Renderiza o Markdown na div de resultados
-                aiResults.innerHTML = marked.parse(markdownContent);
-                exportMarkdownBtn.disabled = false;
+                ## 1. Diagnóstico Geral do Processo
+                (Resumo de alto nível do que o processo faz, seu objetivo e seu contexto, baseado nos dados SIPOC.)
+
+                ## 2. Análise SWOT (Pontos Fortes e Fracos)
+
+                ### 2.1 Pontos Fortes
+                (Liste 2-3 aspectos positivos do fluxo atual, como clareza, automação percebida, ou baixa complexidade.)
+
+                ### 2.2 Pontos Fracos
+                (Liste 3-4 áreas problemáticas ou riscos de falha, baseadas nos dados BPMN e 5W2H.)
+
+                ## 3. Identificação de Desperdícios (Muda)
+                Identifique e descreva os principais desperdícios Lean (Muda) encontrados no fluxo (os 8 desperdícios). Use a tabela abaixo OBRIGATORIAMENTE:
+
+                | Tipo de Desperdício (Muda) | Localização no Processo (Tarefa) | Impacto no Tempo/Custo/Qualidade |
+                | :------------------------- | :------------------------------- | :------------------------------- |
+                | Ex: Espera                 | Tarefa 'Analisar Pedido'         | Atraso de X dias no tempo de ciclo|
+                | ...                        | ...                              | ...                              |
+                
+                ## 4. Gargalo Principal e Análise de Causa-Raiz
+
+                ### 4.1 Gargalo Principal
+                (Identifique a tarefa ou decisão que mais restringe o fluxo de valor e explique o porquê.)
+
+                ### 4.2 Análise de Causa-Raiz (5 Porquês)
+                Aplique a técnica dos 5 Porquês ao Gargalo Principal. Exponha a sequência de perguntas e a causa-raiz identificada.
+                * Por quê? [Primeira Resposta]
+                * Por quê? [Segunda Resposta]
+                * Por quê? [Terceira Resposta]
+                * Por quê? [Quarta Resposta]
+                * **Causa Raiz:** [Quinta Resposta/Causa Final]
+
+                ## 5. Plano de Ação Kaizen e Benefícios
+
+                ### 5.1 Área de Foco para Melhoria
+                (Defina uma única área de processo para focar a intervenção Kaizen.)
+
+                ### 5.2 Ação Kaizen Específica
+                (Sugira uma ação clara, objetiva e implementável para resolver a Causa Raiz.)
+
+                ### 5.3 Benefício Esperado
+                (Quantifique o ganho esperado em termos de redução de tempo de ciclo, custo, ou aumento de qualidade/satisfação.)
+
+                ## 6. Conclusão e Recomendações Estratégicas
+                
+                ### 6.1 Resumo Estratégico
+                Reforce os principais achados (gargalo, desperdícios, falhas críticas) e mostre o impacto geral no processo (tempo, custo, qualidade).
+
+                ### 6.2 Recomendações Práticas
+                Liste as ações priorizadas em um formato de checklist (usando listas Markdown para simular o checklist):
+                * [ ] Automatizar a Tarefa X.
+                * [ ] Padronizar a Tarefa Y.
+                * [ ] Criar treinamento para Z.
+
+                ### 6.3 Direcionamento Estratégico
+                Sugira os próximos passos para a implementação e monitoramento da melhoria (ex: piloto, indicadores, acompanhamento).
+
+                ### 6.4 Encerramento e Visão Lean
+                (Feche o relatório reforçando o compromisso com a melhoria contínua (Kaizen) e o foco em valor.)
+                `;
+
+                // 4. Montar a query dinâmica
+                const userQuery = generateAIPrompt(processData, xml);
+                
+                // 5. Chamar a API
+                const responseText = await callGeminiAPI(systemPrompt, userQuery);
+
+                // 6. Exibir resultados e armazenar
+                lastReportContent = responseText;
+                aiResults.innerHTML = marked.parse(responseText);
+                exportMarkdownBtn.disabled = false; // Habilita exportação
 
             } catch (err) {
-                console.error(err);
-                aiError.classList.remove('hidden');
-                document.getElementById('ai-error-message').textContent = err.message || 'Erro inesperado ao gerar relatório.';
+                console.error("Erro na análise de IA:", err);
+                // Ajusta a mensagem de erro para ser mais amigável
+                aiError.textContent = `Erro ao analisar o processo. Detalhes: ${err.message}`;
+                document.getElementById('ai-error-message').textContent = `Detalhes: ${err.message}`;
+                aiError.style.display = 'block';
+                exportMarkdownBtn.disabled = true;
             } finally {
-                aiLoading.classList.add('hidden');
+                aiLoading.style.display = 'none';
                 aiButton.disabled = false;
             }
         });
 
-        // Exportação do Relatório
-        exportMarkdownBtn.addEventListener('click', () => {
-            if (!lastReportContent) return;
+        // ------------------------------------
+        // Lógica de Exportação
+        // ------------------------------------
 
-            const blob = new Blob([lastReportContent], { type: 'text/markdown;charset=utf-8' });
+        exportMarkdownBtn.addEventListener('click', () => {
+            if (!lastReportContent) {
+                exportFeedback.textContent = "Por favor, gere a análise com IA antes de exportar.";
+                exportFeedback.classList.remove('text-green-600', 'text-red-600');
+                exportFeedback.classList.add('text-red-600');
+                exportFeedback.style.display = 'block';
+                setTimeout(() => exportFeedback.style.display = 'none', 3000);
+                return;
+            }
+
+            // O conteúdo já está em Markdown (lastReportContent), basta criar o cabeçalho e disparar o download.
+            let markdownText = `# Relatório de Diagnóstico de Processo\n\n`;
+            markdownText += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n\n`;
+            markdownText += `--- Conteúdo do Relatório ---\n\n`;
+            markdownText += lastReportContent;
+
+            // Dispara o download
+            const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'Relatorio_Diagnostico_Lean.md';
+            link.download = `relatorio_diagnostico_processo_${Date.now()}.md`;
             link.click();
 
-            exportFeedback.textContent = '✅ Relatório exportado!';
-            exportFeedback.classList.remove('hidden');
-            setTimeout(() => exportFeedback.classList.add('hidden'), 3000);
+            exportFeedback.textContent = "Relatório exportado com sucesso!";
+            exportFeedback.classList.remove('text-red-600');
+            exportFeedback.classList.add('text-green-600');
+            exportFeedback.style.display = 'block';
+            setTimeout(() => exportFeedback.style.display = 'none', 3000);
         });
 
-        // Inicialização
-        loadDiagram(exampleXML);
-        irParaEtapa(0);
+
+        // ------------------------------------
+        // Lógica da API Gemini (Agora obtendo a chave do input)
+        // ------------------------------------
+        
+        async function fetchAPI(apiUrl, payload) {
+            // Tenta obter a chave do campo de input. Se estiver vazio, usa a chave injetada (se estiver no Canvas)
+            const apiKey = apiKeyInput.value.trim() || ""; 
+            const finalApiUrl = `${apiUrl}?key=${apiKey}`;
+
+            const response = await fetch(finalApiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                // Tenta analisar o erro como JSON, se falhar, usa a string
+                let errorMessage = `Erro na API: ${response.status} ${response.statusText}.`;
+                try {
+                    const errorJson = JSON.parse(errorBody);
+                    // Adiciona a mensagem do corpo do erro
+                    errorMessage += ` Mensagem: ${errorJson.error?.message || 'Detalhes desconhecidos.'}`;
+                } catch (e) {
+                    errorMessage += ` Resposta: ${errorBody.substring(0, 100)}...`;
+                }
+                throw new Error(errorMessage);
+            }
+            
+            return await response.json();
+        }
+
+        async function callGeminiAPI(systemPrompt, userQuery) {
+            // Implementação de Backoff para garantir a resiliência da chamada
+            const MAX_RETRIES = 5;
+            let currentDelay = 1000; // 1 second
+
+            for (let i = 0; i < MAX_RETRIES; i++) {
+                try {
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent`;
+
+                    const payload = {
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        },
+                        contents: [{
+                            parts: [{ text: userQuery }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.2,
+                            topP: 0.9,
+                            maxOutputTokens: 4096,
+                        }
+                    };
+
+                    const result = await fetchAPI(apiUrl, payload);
+                    
+                    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content?.parts?.[0]?.text) {
+                        return result.candidates[0].content.parts[0].text;
+                    } else {
+                        throw new Error("A resposta da IA está vazia ou em formato inválido.");
+                    }
+                } catch (error) {
+                    if (i === MAX_RETRIES - 1) {
+                        // Última tentativa falhou, lança o erro
+                        throw error;
+                    }
+                    // Implementa o backoff exponencial antes de tentar novamente
+                    await new Promise(resolve => setTimeout(resolve, currentDelay));
+                    currentDelay *= 2; // Dobra o delay para o próximo retry
+                }
+            }
+            // Deve ser inalcançável se o throw acima funcionar corretamente, mas para clareza:
+            throw new Error("Falha na chamada à API após múltiplas tentativas.");
+
+        }
+
+        // --- Inicialização ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa a navegação para a primeira etapa
+            irParaEtapa(0);
+
+            // Carrega um diagrama vazio ao iniciar (ou um exemplo se preferir, mas deixamos vazio por padrão)
+            modeler.createDiagram().catch(err => {
+                console.error('Erro ao criar diagrama inicial:', err);
+            });
+        });
     </script>
 </body>
 </html>
