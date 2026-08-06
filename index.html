@@ -1,392 +1,217 @@
 <!doctype html>
 <html lang="pt-BR">
- <head><script>window["__codeletBootstrap__"]=JSON.parse('{"A":"A","B":"20260806-05-839f1a0","C":{"Abril Fatface":"YACgEZbkUVE,0","Alfa Slab One":"YACgEYS9sJU,0","Anton":"YACgEcYqQ-A,0","Archivo":"YAHO2-t-jNE,0","Arial":"YAGyDvJ_4Ts,0","Bebas Neue":"YACgESME5ew,0","Bricolage Grotesque":"YAFyMcdwzpc,0","Canva Sans":"YAFLd8sKbwc,2","Caveat":"YALBs2ploWQ,0","Comic Sans MS":"YAHO2VMiyZo,0","Cormorant Garamond":"YAFdJhX-538,0","Courier New":"YAGzXiGs0_8,0","DM Sans":"YAD1aU3sLnI,0","DM Serif Display":"YAD1aYG82rc,0","Forum":"YACgEcnnqB4,0","Fraunces":"YAEul-FRQw4,0","Georgia":"YAGzXkO0pEM,0","Helvetica Neue":"YAFcf6CtJfI,0","Impact":"YAFcfnjI7Vk,0","Inter":"YAFdJvSyp_k,3","Iowan Old Style":"YAGNIFa8j9o,0","Jacques Francois":"YAHO2a5g66Q,0","JetBrains Mono":"YAFdJksXcAk,0","Libre Baskerville":"YACgEUFdPdA,0","Manrope":"YAHO2b2feC4,0","Merriweather":"YACgEXvHxxs,0","Montserrat":"YADLjI9qxTA,0","Nunito":"YACgEX8C5Gg,0","Oleo Script":"YACgEQQ14jI,0","Phantom Sans":"YAHO2E8Pb88,0","Playfair Display":"YACgEYmuCJE,0","Poppins":"YAFdJjbTu24,1","Press Start 2P":"YAFyGr-8pmQ,0","Quicksand":"YADWjpfPmdk,0","Raleway":"YACgEVg3xZg,0","Segoe UI":"YAHNdRD1Klw,0","Source Sans 3":"YAG4lO1Mj10,0","Spectral":"YAHO2rVUHIM,0","Times New Roman":"YAGzXW3gftg,0","Times":"YAGzXW3gftg,0","Ubuntu":"YACgERDU--Q,0","Work Sans":"YAGXhLOKv44,0","Yellowtail":"YACgEYG4kG4,0","ui-monospace":"YADlN8CFZ8Q,0","ui-sans-serif":"YACkoN-xg4g,0"}}');</script><script src="/_sdk/7949ff62d67710d5.telemetry_sdk.js" integrity="sha512-KIvXA82Di44YY/RH9/63A9MuTuavYgDFG8PfErJn7Wli4K0LAOk+coo/aPXk3+ZNL96nHh9VYD4PE+fLes+laQ=="></script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ferramenta de Diagnóstico Lean</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'DM Sans', sans-serif; }
-    .tab-btn { transition: all 0.2s; }
-    .tab-btn.active { transform: scale(1.02); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-    .bpmn-canvas { min-height: 380px; position: relative; }
-    .bpmn-node { position: absolute; cursor: grab; user-select: none; z-index: 1; }
-    .bpmn-node:active { cursor: grabbing; }
-    .toolbar-btn { transition: background 0.15s; }
-    .toolbar-btn.selected { outline: 3px solid #7c3aed; outline-offset: 2px; }
-    .panel { animation: fadeIn 0.2s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
-  <script src="/_sdk/0e8d3a91e1c6f495.data_sdk.js" type="text/javascript" integrity="sha512-c00oDoGjsMgluCLLEyVl3suwEkgjOGGplVFbsilUoBg4aMKNmsL3mwsc9r0dPn95qiSZyjBousQXgROkAW7p/w=="></script>
-  <script src="/_sdk/04cc6185e046f597.resizing_sdk.js" type="text/javascript" integrity="sha512-CiE/G92aQF0nxneFg1kdOvXih8sQ1Z2a2QI3+r/WvzJwQqH6+IyB3iL07OkJmpm3ABAaf07+FnqWny98f5sR6w=="></script>
- </head>
- <body data-template-id="__page-root" class="min-h-screen p-4 md:p-8">
-  <header class="text-center mb-6">
-   <h1 data-template-id="main-title" class="canva-text font-bold text-2xl md:text-3xl" style="color:#1e293b;">Ferramenta de Diagnóstico Lean: Painel Central</h1>
-  </header>
-  <nav class="flex flex-wrap justify-center gap-2 mb-6" role="tablist"><button data-template-id="tab-bpmn" class="canva-button tab-btn active px-4 py-2 rounded-full text-sm font-semibold" style="background:#7c3aed;color:#fff;" role="tab" aria-selected="true" onclick="switchTab('bpmn')">📋 BPMN (Processo)</button> <span class="self-center text-gray-400">→</span> <button data-template-id="tab-sipoc" class="canva-button tab-btn px-4 py-2 rounded-full text-sm font-semibold" style="background:#10b981;color:#fff;" role="tab" aria-selected="false" onclick="switchTab('sipoc')">🟢 SIPOC (Escopo)</button> <span class="self-center text-gray-400">→</span> <button data-template-id="tab-5w2h" class="canva-button tab-btn px-4 py-2 rounded-full text-sm font-semibold" style="background:#f59e0b;color:#fff;" role="tab" aria-selected="false" onclick="switchTab('5w2h')">⚡ 5W2H (Ação)</button> <span class="self-center text-gray-400">→</span> <button data-template-id="tab-ia" class="canva-button tab-btn px-4 py-2 rounded-full text-sm font-semibold" style="background:#ef4444;color:#fff;" role="tab" aria-selected="false" onclick="switchTab('ia')">🤖 IA Lean (Análise)</button>
-  </nav>
-  <main class="max-w-6xl mx-auto"><!-- BPMN Panel -->
-   <section id="panel-bpmn" class="panel">
-    <div data-template-id="bpmn-card" class="canva-card rounded-2xl p-6 shadow-lg bg-white">
-     <div class="flex items-center gap-2 mb-1">
-      <span class="text-xl">📋</span>
-      <h2 data-template-id="bpmn-heading" class="canva-text font-bold text-xl" style="color:#1e293b;">BPMN (Processo)</h2>
-     </div>
-     <p data-template-id="bpmn-desc" class="canva-text text-sm mb-4" style="color:#64748b;">Modele o processo atual utilizando a notação BPMN 2.0. Use a barra de ferramentas para adicionar elementos e conectá-los.</p>
-     <div class="flex flex-wrap gap-2 mb-3 p-2 bg-gray-50 rounded-lg border"><button class="toolbar-btn px-3 py-1.5 rounded bg-green-100 border border-green-300 text-xs font-semibold" onclick="setTool('start')">⬤ Início</button> <button class="toolbar-btn px-3 py-1.5 rounded bg-blue-100 border border-blue-300 text-xs font-semibold" onclick="setTool('task')">▭ Tarefa</button> <button class="toolbar-btn px-3 py-1.5 rounded bg-yellow-100 border border-yellow-300 text-xs font-semibold" onclick="setTool('gateway')">◇ Gateway</button> <button class="toolbar-btn px-3 py-1.5 rounded bg-red-100 border border-red-300 text-xs font-semibold" onclick="setTool('end')">⊗ Fim</button> <button class="toolbar-btn px-3 py-1.5 rounded bg-purple-100 border border-purple-300 text-xs font-semibold" onclick="setTool('connect')">↗ Conectar</button> <button class="toolbar-btn px-3 py-1.5 rounded bg-gray-200 border border-gray-300 text-xs font-semibold" onclick="setTool('move')">✋ Mover</button> <button class="toolbar-btn px-3 py-1.5 rounded bg-red-50 border border-red-200 text-xs font-semibold" onclick="setTool('delete')">🗑 Excluir</button>
-     </div>
-     <div id="bpmn-canvas" class="bpmn-canvas border-2 border-dashed border-gray-200 rounded-xl bg-white overflow-hidden cursor-crosshair" onclick="canvasClick(event)"></div>
-     <div class="flex flex-wrap gap-3 mt-4"><button data-template-id="bpmn-load-btn" class="canva-button px-4 py-2 rounded-lg text-sm font-semibold" style="background:#10b981;color:#fff;" onclick="loadBpmnExample()">🔄 Carregar Exemplo</button> <button data-template-id="bpmn-save-btn" class="canva-button px-4 py-2 rounded-lg text-sm font-semibold" style="background:#3b82f6;color:#fff;" onclick="saveBpmnXml()">💾 Salvar XML</button>
-     </div>
-    </div>
-   </section><!-- SIPOC Panel -->
-   <section id="panel-sipoc" class="panel hidden">
-    <div data-template-id="sipoc-card" class="canva-card rounded-2xl p-6 shadow-lg bg-white">
-     <div class="flex items-center gap-2 mb-1">
-      <span class="text-xl">🟢</span>
-      <h2 data-template-id="sipoc-heading" class="canva-text font-bold text-xl" style="color:#1e293b;">SIPOC (Escopo)</h2>
-     </div>
-     <p data-template-id="sipoc-desc" class="canva-text text-sm mb-4" style="color:#64748b;">O campo 'Processo' é preenchido automaticamente com as tarefas do seu BPMN. Preencha os campos restantes para contextualizar a IA.</p>
-     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-      <div>
-       <label class="block text-sm font-semibold text-gray-700 mb-1">S - Fornecedores</label><textarea id="sipoc-s" rows="4" class="w-full border rounded-lg p-2 text-sm" placeholder="Quem fornece as entradas?"></textarea>
-      </div>
-      <div>
-       <label class="block text-sm font-semibold text-gray-700 mb-1">I - Entradas</label><textarea id="sipoc-i" rows="4" class="w-full border rounded-lg p-2 text-sm" placeholder="O que é necessário para o processo?"></textarea>
-      </div>
-      <div>
-       <label class="block text-sm font-semibold text-gray-700 mb-1">P - Processo <span class="text-xs text-purple-600">(do BPMN)</span></label>
-       <div id="sipoc-process" class="w-full border rounded-lg p-2 text-sm bg-gray-50 min-h-[100px] text-gray-600 italic">
-        Nenhuma tarefa encontrada no diagrama.
-       </div>
-      </div>
-      <div>
-       <label class="block text-sm font-semibold text-gray-700 mb-1">O - Saídas</label><textarea id="sipoc-o" rows="4" class="w-full border rounded-lg p-2 text-sm" placeholder="O que o processo entrega?"></textarea>
-      </div>
-      <div>
-       <label class="block text-sm font-semibold text-gray-700 mb-1">C - Clientes</label><textarea id="sipoc-c" rows="4" class="w-full border rounded-lg p-2 text-sm" placeholder="Quem recebe as saídas?"></textarea>
-      </div>
-     </div>
-    </div>
-   </section><!-- 5W2H Panel -->
-   <section id="panel-5w2h" class="panel hidden">
-    <div data-template-id="w5h2-card" class="canva-card rounded-2xl p-6 shadow-lg bg-white">
-     <div class="flex items-center gap-2 mb-1">
-      <span class="text-xl">⚡</span>
-      <h2 data-template-id="w5h2-heading" class="canva-text font-bold text-xl" style="color:#1e293b;">5W2H (Ação)</h2>
-     </div>
-     <p data-template-id="w5h2-desc" class="canva-text text-sm mb-4" style="color:#64748b;">Selecione uma tarefa mapeada no BPMN para detalhar o seu estado atual (AS IS), coletando dados essenciais para a IA.</p>
-     <div class="mb-4">
-      <label for="w5h2-task-select" class="block text-sm font-semibold text-gray-700 mb-1">Tarefa para Detalhar:</label><select id="w5h2-task-select" class="w-full border rounded-lg p-2 text-sm" onchange="selectW5h2Task()"><option value="">-- Selecione uma tarefa do BPMN --</option></select>
-     </div>
-     <div id="w5h2-form" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-       <label class="block text-xs font-semibold text-gray-600 mb-1">What (O quê?)</label><input type="text" id="w5h2-what" class="w-full border rounded-lg p-2 text-sm" placeholder="O que será feito?">
-      </div>
-      <div>
-       <label class="block text-xs font-semibold text-gray-600 mb-1">Why (Por quê?)</label><input type="text" id="w5h2-why" class="w-full border rounded-lg p-2 text-sm" placeholder="Por que será feito?">
-      </div>
-      <div>
-       <label class="block text-xs font-semibold text-gray-600 mb-1">Where (Onde?)</label><input type="text" id="w5h2-where" class="w-full border rounded-lg p-2 text-sm" placeholder="Onde será feito?">
-      </div>
-      <div>
-       <label class="block text-xs font-semibold text-gray-600 mb-1">When (Quando?)</label><input type="text" id="w5h2-when" class="w-full border rounded-lg p-2 text-sm" placeholder="Quando será feito?">
-      </div>
-      <div>
-       <label class="block text-xs font-semibold text-gray-600 mb-1">Who (Quem?)</label><input type="text" id="w5h2-who" class="w-full border rounded-lg p-2 text-sm" placeholder="Quem fará?">
-      </div>
-      <div>
-       <label class="block text-xs font-semibold text-gray-600 mb-1">How (Como?)</label><input type="text" id="w5h2-how" class="w-full border rounded-lg p-2 text-sm" placeholder="Como será feito?">
-      </div>
-      <div>
-       <label class="block text-xs font-semibold text-gray-600 mb-1">How Much (Quanto custa?)</label><input type="text" id="w5h2-howmuch" class="w-full border rounded-lg p-2 text-sm" placeholder="Quanto custará?">
-      </div>
-     </div>
-    </div>
-   </section><!-- IA Panel -->
-   <section id="panel-ia" class="panel hidden">
-    <div data-template-id="ia-card" class="canva-card rounded-2xl p-6 shadow-lg bg-white">
-     <div class="flex items-center gap-2 mb-1">
-      <span class="text-xl">🤖</span>
-      <h2 data-template-id="ia-heading" class="canva-text font-bold text-xl" style="color:#1e293b;">IA Lean (Análise)</h2>
-     </div>
-     <p data-template-id="ia-desc" class="canva-text text-sm mb-4" style="color:#64748b;">A IA irá processar o diagrama BPMN, os dados SIPOC e o detalhamento 5W2H para gerar o relatório de diagnóstico profissional.</p>
-     <div id="ia-summary" class="mb-4 p-4 bg-gray-50 rounded-lg border text-sm space-y-2">
-      <p class="font-semibold text-gray-700">Resumo dos dados coletados:</p>
-      <div id="ia-summary-content" class="text-gray-600">
-       Preencha as etapas anteriores para gerar o diagnóstico.
-      </div>
-     </div>
-     <div class="flex flex-wrap gap-3"><button data-template-id="ia-analyze-btn" class="canva-button px-5 py-2 rounded-lg text-sm font-semibold" style="background:#7c3aed;color:#fff;" onclick="runLeanAnalysis()">🚀 Iniciar Análise de IA</button> <button data-template-id="ia-export-btn" class="canva-button px-5 py-2 rounded-lg text-sm font-semibold" style="background:#3b82f6;color:#fff;" onclick="exportMarkdown()">💾 Exportar Relatório (Markdown)</button>
-     </div>
-     <div id="ia-results" class="mt-4 space-y-3 hidden">
-      <h3 class="font-semibold text-gray-800">Resultado da Análise:</h3>
-      <div id="ia-output" class="bg-gray-50 rounded-lg p-4 text-sm leading-relaxed"></div>
-     </div>
-    </div>
-   </section>
-  </main>
-  <script src="/_sdk/fef09cb5f5b2424b.editing_sdk.js" integrity="sha512-PbmCvZWt+xecnQll4ofK5HTtTS+pGwwY1xn9+p49qHgEHml+uvyc0o1f2Eltkd4t324iwgnf7acUjfnKHkik1w=="></script>
-  <script>
-    let bpmnNodes = [];
-    let bpmnConnections = [];
-    let nextId = 1;
-    let currentTool = 'move';
-    let connectFrom = null;
-    let w5h2Data = {};
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ferramenta de Diagnóstico Lean</title>
 
-    function switchTab(tab) {
-      document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
-      document.getElementById('panel-' + tab).classList.remove('hidden');
-      document.querySelectorAll('[role="tab"]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
-      const btn = document.querySelector(`[onclick="switchTab('${tab}')"]`);
-      if (btn) { btn.classList.add('active'); btn.setAttribute('aria-selected', 'true'); }
-      if (tab === 'sipoc') updateSipocProcess();
-      if (tab === '5w2h') updateW5h2Select();
-      if (tab === 'ia') updateIaSummary();
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#f8fafc;
+  margin:0;
+  padding:20px;
+}
+
+h1,h2 { color:#1e293b; }
+
+.container {
+  max-width:1200px;
+  margin:auto;
+}
+
+.tabs {
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  margin-bottom:20px;
+}
+
+.tab-btn {
+  padding:10px 15px;
+  border:none;
+  border-radius:20px;
+  cursor:pointer;
+  color:#fff;
+  font-weight:bold;
+}
+
+.active { outline:3px solid #000; }
+
+.panel {
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.hidden { display:none; }
+
+.toolbar button {
+  margin:2px;
+  padding:6px;
+  cursor:pointer;
+}
+
+#bpmn-canvas {
+  height:400px;
+  border:2px dashed #ccc;
+  position:relative;
+}
+
+.node {
+  position:absolute;
+  padding:6px 10px;
+  border:2px solid #3b82f6;
+  background:#fff;
+  cursor:move;
+  font-size:12px;
+}
+
+textarea, input, select {
+  width:100%;
+  padding:6px;
+  margin-top:4px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ferramenta de Diagnóstico Lean</h1>
+
+<div class="tabs">
+  <button class="tab-btn active" style="background:#7c3aed" onclick="switchTab('bpmn',event)">BPMN</button>
+  <button class="tab-btn" style="background:#10b981" onclick="switchTab('sipoc',event)">SIPOC</button>
+  <button class="tab-btn" style="background:#f59e0b" onclick="switchTab('w5h2',event)">5W2H</button>
+  <button class="tab-btn" style="background:#ef4444" onclick="switchTab('ia',event)">IA</button>
+</div>
+
+<!-- BPMN -->
+<div id="bpmn" class="panel">
+
+<h2>BPMN</h2>
+
+<div class="toolbar">
+  <button onclick="setTool('task',event)">Tarefa</button>
+  <button onclick="setTool('delete',event)">Excluir</button>
+</div>
+
+<div id="bpmn-canvas" onclick="canvasClick(event)"></div>
+
+</div>
+
+<!-- SIPOC -->
+<div id="sipoc" class="panel hidden">
+
+<h2>SIPOC</h2>
+
+<label>Fornecedores</label>
+<textarea id="sipoc-s"></textarea>
+
+<label>Entradas</label>
+<textarea id="sipoc-i"></textarea>
+
+<label>Processo</label>
+<div id="sipoc-process"></div>
+
+<label>Saídas</label>
+<textarea id="sipoc-o"></textarea>
+
+<label>Clientes</label>
+<textarea id="sipoc-c"></textarea>
+
+</div>
+
+<!-- 5W2H -->
+<div id="w5h2" class="panel hidden">
+
+<h2>5W2H</h2>
+
+<select id="taskSelect" onchange="loadTask()"></select>
+
+<input id="what" placeholder="What">
+<input id="why" placeholder="Why">
+
+</div>
+
+<!-- IA -->
+<div id="ia" class="panel hidden">
+
+<h2>Análise Lean</h2>
+
+<button onclick="analyze()">Rodar análise</button>
+
+<div id="output"></div>
+
+</div>
+
+</div>
+
+<script>
+
+let nodes = [];
+let tool = "task";
+let id = 1;
+
+function switchTab(tab,e){
+  document.querySelectorAll(".panel").forEach(p=>p.classList.add("hidden"));
+  document.getElementById(tab).classList.remove("hidden");
+
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  if(e) e.target.classList.add("active");
+
+  if(tab==="sipoc") updateSipoc();
+  if(tab==="w5h2") updateSelect();
+}
+
+function setTool(t,e){
+  tool = t;
+}
+
+function canvasClick(e){
+  if(tool==="task"){
+    const div=document.createElement("div");
+    div.className="node";
+    div.style.left=e.offsetX+"px";
+    div.style.top=e.offsetY+"px";
+    div.innerText="Tarefa "+id++;
+
+    div.onclick=()=> {
+      if(tool==="delete") div.remove();
     }
 
-    function setTool(tool) {
-      currentTool = tool;
-      connectFrom = null;
-      document.querySelectorAll('.toolbar-btn').forEach(b => b.classList.remove('selected'));
-      event.currentTarget.classList.add('selected');
-      const canvas = document.getElementById('bpmn-canvas');
-      canvas.style.cursor = tool === 'move' ? 'grab' : tool === 'connect' ? 'pointer' : tool === 'delete' ? 'not-allowed' : 'crosshair';
-    }
+    document.getElementById("bpmn-canvas").appendChild(div);
+    nodes.push(div.innerText);
+  }
+}
 
-    function canvasClick(e) {
-      if (e.target !== document.getElementById('bpmn-canvas') && !e.target.closest('svg')) return;
-      if (currentTool === 'move' || currentTool === 'connect' || currentTool === 'delete') return;
-      const canvas = document.getElementById('bpmn-canvas');
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left - 20;
-      const y = e.clientY - rect.top - 20;
-      let label = '';
-      if (currentTool === 'task') { label = 'Tarefa ' + nextId; }
-      else if (currentTool === 'start') { label = 'Início'; }
-      else if (currentTool === 'end') { label = 'Fim'; }
-      bpmnNodes.push({ id: nextId++, type: currentTool, label, x, y });
-      renderBpmn();
-    }
+function updateSipoc(){
+  const el=document.getElementById("sipoc-process");
+  el.innerHTML=nodes.map(n=>"<div>"+n+"</div>").join("");
+}
 
-    function getTaskNodes() { return bpmnNodes.filter(n => n.type === 'task'); }
+function updateSelect(){
+  const sel=document.getElementById("taskSelect");
+  sel.innerHTML="";
+  nodes.forEach(n=>{
+    const o=document.createElement("option");
+    o.text=n;
+    sel.add(o);
+  });
+}
 
-    function renderBpmn() {
-      const canvas = document.getElementById('bpmn-canvas');
-      canvas.innerHTML = '';
-      canvas.style.height = '380px';
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('class', 'absolute inset-0 w-full h-full pointer-events-none');
-      svg.style.zIndex = '0';
-      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-      defs.innerHTML = '<marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6b7280"/></marker>';
-      svg.appendChild(defs);
-      bpmnConnections.forEach(([fromId, toId]) => {
-        const a = bpmnNodes.find(n => n.id === fromId);
-        const b = bpmnNodes.find(n => n.id === toId);
-        if (!a || !b) return;
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', getNodeCenterX(a)); line.setAttribute('y1', getNodeCenterY(a));
-        line.setAttribute('x2', getNodeCenterX(b)); line.setAttribute('y2', getNodeCenterY(b));
-        line.setAttribute('stroke', '#6b7280'); line.setAttribute('stroke-width', '2');
-        line.setAttribute('marker-end', 'url(#arrow)');
-        svg.appendChild(line);
-      });
-      canvas.appendChild(svg);
+function loadTask(){}
 
-      bpmnNodes.forEach(node => {
-        const el = document.createElement('div');
-        el.className = 'bpmn-node flex flex-col items-center';
-        el.style.left = node.x + 'px'; el.style.top = node.y + 'px';
-        el.dataset.nodeId = node.id;
-        if (node.type === 'start') {
-          el.innerHTML = `<div class="w-9 h-9 rounded-full border-[3px] border-green-600 bg-green-100"></div><span class="text-[10px] mt-1 text-gray-600">${node.label}</span>`;
-        } else if (node.type === 'end') {
-          el.innerHTML = `<div class="w-9 h-9 rounded-full border-4 border-red-600 bg-red-100"></div><span class="text-[10px] mt-1 text-gray-600">${node.label}</span>`;
-        } else if (node.type === 'gateway') {
-          el.innerHTML = `<div class="w-9 h-9 bg-yellow-400 rotate-45 border-2 border-yellow-600 flex items-center justify-center"><span class="text-white font-bold -rotate-45 text-xs">✕</span></div>`;
-        } else {
-          el.innerHTML = `<div class="px-3 py-2 bg-white border-2 border-blue-400 rounded text-[11px] text-center shadow-sm whitespace-nowrap max-w-[140px] truncate">${node.label}</div>`;
-        }
-        el.addEventListener('mousedown', (e) => {
-          if (currentTool === 'delete') { bpmnNodes = bpmnNodes.filter(n => n.id !== node.id); bpmnConnections = bpmnConnections.filter(c => c[0] !== node.id && c[1] !== node.id); renderBpmn(); return; }
-          if (currentTool === 'connect') {
-            if (!connectFrom) { connectFrom = node.id; el.style.outline = '2px solid #7c3aed'; }
-            else { if (connectFrom !== node.id) bpmnConnections.push([connectFrom, node.id]); connectFrom = null; renderBpmn(); }
-            e.stopPropagation(); return;
-          }
-          let dragging = true;
-          const ox = e.offsetX, oy = e.offsetY;
-          const moveHandler = (ev) => { if (!dragging) return; const rect = canvas.getBoundingClientRect(); node.x = Math.max(0, ev.clientX - rect.left - ox); node.y = Math.max(0, ev.clientY - rect.top - oy); renderBpmn(); };
-          const upHandler = () => { dragging = false; document.removeEventListener('mousemove', moveHandler); document.removeEventListener('mouseup', upHandler); };
-          document.addEventListener('mousemove', moveHandler); document.addEventListener('mouseup', upHandler); e.stopPropagation();
-        });
-        if (node.type === 'task') {
-          el.addEventListener('dblclick', () => {
-            const input = document.createElement('input');
-            input.type = 'text'; input.value = node.label;
-            input.className = 'text-xs border rounded px-1 py-0.5 w-28';
-            input.style.position = 'absolute'; input.style.left = node.x + 'px'; input.style.top = (node.y + 40) + 'px'; input.style.zIndex = '10';
-            input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { node.label = input.value || node.label; input.remove(); renderBpmn(); } if (ev.key === 'Escape') { input.remove(); } });
-            input.addEventListener('blur', () => { node.label = input.value || node.label; input.remove(); renderBpmn(); });
-            canvas.appendChild(input); input.focus();
-          });
-        }
-        canvas.appendChild(el);
-      });
-    }
+function analyze(){
+  document.getElementById("output").innerHTML =
+    "Análise simples: processo com "+nodes.length+" etapas.";
+}
 
-    function getNodeCenterX(n) { return n.type === 'task' ? n.x + 50 : n.x + 18; }
-    function getNodeCenterY(n) { return n.y + 18; }
+</script>
 
-    function loadBpmnExample() {
-      bpmnNodes = [
-        { id: 1, type: 'start', label: 'Início do Processo', x: 20, y: 150 },
-        { id: 2, type: 'task', label: 'Receber Solicitação', x: 100, y: 138 },
-        { id: 3, type: 'task', label: 'Analisar Solicitação', x: 270, y: 138 },
-        { id: 4, type: 'gateway', label: '', x: 430, y: 150 },
-        { id: 5, type: 'task', label: 'Executar Atividade', x: 510, y: 90 },
-        { id: 6, type: 'task', label: 'Comunicar Solicitante', x: 510, y: 220 },
-        { id: 7, type: 'task', label: 'Validar Resultado', x: 680, y: 90 },
-        { id: 8, type: 'gateway', label: '', x: 830, y: 102 },
-        { id: 9, type: 'task', label: 'Finalizar Processo', x: 910, y: 90 },
-        { id: 10, type: 'end', label: 'Fim do Processo', x: 1070, y: 102 },
-        { id: 11, type: 'task', label: 'Tratar Não Conformidade', x: 840, y: 220 },
-      ];
-      bpmnConnections = [[1,2],[2,3],[3,4],[4,5],[4,6],[5,7],[7,8],[8,9],[9,10],[8,11]];
-      nextId = 12;
-      renderBpmn();
-    }
-
-    function saveBpmnXml() {
-      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<process>\n';
-      bpmnNodes.forEach(n => { xml += `  <node id="${n.id}" type="${n.type}" label="${n.label}" x="${Math.round(n.x)}" y="${Math.round(n.y)}"/>\n`; });
-      bpmnConnections.forEach(c => { xml += `  <connection from="${c[0]}" to="${c[1]}"/>\n`; });
-      xml += '</process>';
-      const blob = new Blob([xml], { type: 'application/xml' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'processo_bpmn.xml'; a.click();
-    }
-
-    function updateSipocProcess() {
-      const tasks = getTaskNodes();
-      const el = document.getElementById('sipoc-process');
-      el.innerHTML = tasks.length === 0 ? '<em>Nenhuma tarefa encontrada no diagrama.</em>' : tasks.map((t, i) => `<div class="py-1 border-b border-gray-200 last:border-0">${i + 1}. ${t.label}</div>`).join('');
-    }
-
-    function updateW5h2Select() {
-      const select = document.getElementById('w5h2-task-select');
-      const tasks = getTaskNodes();
-      const currentVal = select.value;
-      select.innerHTML = '<option value="">-- Selecione uma tarefa do BPMN --</option>';
-      tasks.forEach(t => { const opt = document.createElement('option'); opt.value = t.label; opt.textContent = t.label; select.appendChild(opt); });
-      if (currentVal && tasks.find(t => t.label === currentVal)) select.value = currentVal;
-    }
-
-    function selectW5h2Task() {
-      const select = document.getElementById('w5h2-task-select');
-      const form = document.getElementById('w5h2-form');
-      if (!select.value) { form.classList.add('hidden'); return; }
-      form.classList.remove('hidden');
-      saveCurrentW5h2();
-      const data = w5h2Data[select.value] || {};
-      document.getElementById('w5h2-what').value = data.what || select.value;
-      document.getElementById('w5h2-why').value = data.why || '';
-      document.getElementById('w5h2-where').value = data.where || '';
-      document.getElementById('w5h2-when').value = data.when || '';
-      document.getElementById('w5h2-who').value = data.who || '';
-      document.getElementById('w5h2-how').value = data.how || '';
-      document.getElementById('w5h2-howmuch').value = data.howmuch || '';
-    }
-
-    function saveCurrentW5h2() {
-      const select = document.getElementById('w5h2-task-select');
-      const key = select.dataset.lastTask;
-      if (key) {
-        w5h2Data[key] = { what: document.getElementById('w5h2-what').value, why: document.getElementById('w5h2-why').value, where: document.getElementById('w5h2-where').value, when: document.getElementById('w5h2-when').value, who: document.getElementById('w5h2-who').value, how: document.getElementById('w5h2-how').value, howmuch: document.getElementById('w5h2-howmuch').value };
-      }
-      select.dataset.lastTask = select.value;
-    }
-
-    document.addEventListener('input', (e) => {
-      if (e.target.id && e.target.id.startsWith('w5h2-')) {
-        const select = document.getElementById('w5h2-task-select');
-        if (select.value) {
-          w5h2Data[select.value] = { what: document.getElementById('w5h2-what').value, why: document.getElementById('w5h2-why').value, where: document.getElementById('w5h2-where').value, when: document.getElementById('w5h2-when').value, who: document.getElementById('w5h2-who').value, how: document.getElementById('w5h2-how').value, howmuch: document.getElementById('w5h2-howmuch').value };
-        }
-      }
-    });
-
-    function updateIaSummary() {
-      const tasks = getTaskNodes();
-      const sipocS = document.getElementById('sipoc-s').value;
-      const sipocI = document.getElementById('sipoc-i').value;
-      const sipocO = document.getElementById('sipoc-o').value;
-      const sipocC = document.getElementById('sipoc-c').value;
-      let html = '';
-      html += `<p><strong>BPMN:</strong> ${tasks.length} tarefa(s) mapeada(s)</p>`;
-      if (sipocS || sipocI || sipocO || sipocC) html += `<p><strong>SIPOC:</strong> Preenchido</p>`;
-      const detailedTasks = Object.keys(w5h2Data).filter(k => w5h2Data[k].what);
-      if (detailedTasks.length) html += `<p><strong>5W2H:</strong> ${detailedTasks.length} tarefa(s) detalhada(s)</p>`;
-      if (!html) html = 'Preencha as etapas anteriores para gerar o diagnóstico.';
-      document.getElementById('ia-summary-content').innerHTML = html;
-    }
-
-    function runLeanAnalysis() {
-      const tasks = getTaskNodes();
-      const sipocS = document.getElementById('sipoc-s').value;
-      const sipocI = document.getElementById('sipoc-i').value;
-      const sipocO = document.getElementById('sipoc-o').value;
-      const sipocC = document.getElementById('sipoc-c').value;
-      const results = document.getElementById('ia-results');
-      const output = document.getElementById('ia-output');
-      results.classList.remove('hidden');
-      let allText = tasks.map(t => t.label).join(' ') + ' ' + sipocS + ' ' + sipocI + ' ' + sipocO + ' ' + sipocC;
-      Object.values(w5h2Data).forEach(d => { allText += ' ' + Object.values(d).join(' '); });
-      allText = allText.toLowerCase();
-      const wastes = [
-        { name: 'Superprodução', tip: 'Verifique se há etapas que produzem mais do que o necessário.', keys: ['excesso','demais','extra'] },
-        { name: 'Espera', tip: 'Identifique gargalos e tempos de espera entre aprovações.', keys: ['aprova','espera','aguard','fila'] },
-        { name: 'Transporte', tip: 'Reduza movimentações desnecessárias de documentos ou materiais.', keys: ['transport','enviar','mover','deslocar'] },
-        { name: 'Processamento Excessivo', tip: 'Elimine atividades que não agregam valor ao cliente.', keys: ['etapa','passo','verific','conferir','redundan'] },
-        { name: 'Estoque', tip: 'Minimize filas de trabalho e acúmulos entre etapas.', keys: ['estoque','acumul','pilha'] },
-        { name: 'Movimentação', tip: 'Otimize o fluxo de trabalho das pessoas envolvidas.', keys: ['moviment','desloc','ir','voltar'] },
-        { name: 'Defeitos', tip: 'Implemente verificações para evitar retrabalho.', keys: ['erro','retrabalho','defeito','não conformidade','corrig'] },
-      ];
-      let findings = wastes.filter(w => w.keys.some(k => allText.includes(k)));
-      if (findings.length === 0) findings = wastes.slice(0, 3);
-      let analysisHtml = `<div class="mb-3 font-semibold text-purple-700">📊 Análise baseada em ${tasks.length} tarefas BPMN</div>`;
-      analysisHtml += findings.map(f => `<div class="mb-2 p-2 bg-red-50 rounded border-l-4 border-red-400"><strong class="text-red-600">⚠️ ${f.name}:</strong> ${f.tip}</div>`).join('');
-      analysisHtml += `<div class="mt-3 p-3 bg-green-50 rounded-lg border border-green-200"><strong>💡 Recomendação:</strong> Aplique o mapeamento de fluxo de valor (VSM) para visualizar e eliminar os desperdícios identificados. Foque nas ${findings.length} áreas identificadas acima.</div>`;
-      output.innerHTML = analysisHtml;
-    }
-
-    function exportMarkdown() {
-      const tasks = getTaskNodes();
-      let md = '# Relatório de Diagnóstico Lean\n\n';
-      md += '## BPMN - Tarefas Mapeadas\n';
-      tasks.forEach((t, i) => { md += `${i + 1}. ${t.label}\n`; });
-      md += '\n## SIPOC\n';
-      md += `- **Fornecedores:** ${document.getElementById('sipoc-s').value || 'N/A'}\n`;
-      md += `- **Entradas:** ${document.getElementById('sipoc-i').value || 'N/A'}\n`;
-      md += `- **Processo:** ${tasks.map(t => t.label).join(', ') || 'N/A'}\n`;
-      md += `- **Saídas:** ${document.getElementById('sipoc-o').value || 'N/A'}\n`;
-      md += `- **Clientes:** ${document.getElementById('sipoc-c').value || 'N/A'}\n`;
-      md += '\n## 5W2H - Detalhamento\n';
-      Object.entries(w5h2Data).forEach(([task, d]) => {
-        md += `\n### ${task}\n`;
-        md += `- What: ${d.what || 'N/A'}\n- Why: ${d.why || 'N/A'}\n- Where: ${d.where || 'N/A'}\n- When: ${d.when || 'N/A'}\n- Who: ${d.who || 'N/A'}\n- How: ${d.how || 'N/A'}\n- How Much: ${d.howmuch || 'N/A'}\n`;
-      });
-      md += '\n## Análise IA Lean\n';
-      md += document.getElementById('ia-output').innerText || 'Análise não executada.';
-      const blob = new Blob([md], { type: 'text/markdown' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'relatorio_lean.md'; a.click();
-    }
-
-    loadBpmnExample();
-  </script>
- </body>
+</body>
 </html>
