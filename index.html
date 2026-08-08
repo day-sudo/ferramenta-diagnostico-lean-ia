@@ -111,22 +111,33 @@
     <div data-template-id="ia-card" class="canva-card rounded-2xl p-6 shadow-lg bg-white">
      <div class="flex items-center gap-2 mb-1">
       <span class="text-xl">🤖</span>
-      <h2 data-template-id="ia-heading" class="canva-text font-bold text-xl" style="color:#1e293b;">IA Lean (Análise)</h2>
-     </div>
-     <p data-template-id="ia-desc" class="canva-text text-sm mb-4" style="color:#64748b;">A IA irá processar o diagrama BPMN, os dados SIPOC e o detalhamento 5W2H para gerar o relatório de diagnóstico profissional.</p>
-     <div id="ia-summary" class="mb-4 p-4 bg-gray-50 rounded-lg border text-sm space-y-2">
-      <p class="font-semibold text-gray-700">Resumo dos dados coletados:</p>
-      <div id="ia-summary-content" class="text-gray-600">
-       Preencha as etapas anteriores para gerar o diagnóstico.
-      </div>
-     </div>
-     <div class="flex flex-wrap gap-3"><button data-template-id="ia-analyze-btn" class="canva-button px-5 py-2 rounded-lg text-sm font-semibold" style="background:#7c3aed;color:#fff;" onclick="runLeanAnalysis()">🚀 Iniciar Análise de IA</button> <button data-template-id="ia-export-btn" class="canva-button px-5 py-2 rounded-lg text-sm font-semibold" style="background:#3b82f6;color:#fff;" onclick="exportMarkdown()">💾 Exportar Relatório (Markdown)</button>
-     </div>
-     <div id="ia-results" class="mt-4 space-y-3 hidden">
-      <h3 class="font-semibold text-gray-800">Resultado da Análise:</h3>
-      <div id="ia-output" class="bg-gray-50 rounded-lg p-4 text-sm leading-relaxed"></div>
-     </div>
-    </div>
+     <h2 data-template-id="ia-heading" class="canva-text font-bold text-xl" style="color:#1e293b;">IA Lean (Análise Avançada)</h2>
+</div>
+<p data-template-id="ia-desc" class="canva-text text-sm mb-4" style="color:#64748b;">Insira sua Chave de API do Gemini para gerar uma análise contextualizada de desperdícios Lean.</p>
+
+<!-- NOVO CAMPO ADICIONADO: Input para a API Key -->
+<div class="mb-4">
+  <label for="gemini-key" class="block text-sm font-medium mb-1" style="color:#334155;">Gemini API Key:</label>
+  <input type="password" id="gemini-key" class="w-full max-w-md p-2 border border-gray-300 rounded-lg text-sm" placeholder="Cole sua chave AI Studio aqui..." />
+</div>
+
+<div id="ia-summary" class="mb-4 p-4 bg-gray-50 rounded-lg border text-sm space-y-2">
+  <p class="font-semibold text-gray-700">Resumo dos dados coletados:</p>
+  <div id="ia-summary-content" class="text-gray-600">
+    Preencha as etapas anteriores para gerar o diagnóstico.
+  </div>
+</div>
+
+<div class="flex flex-wrap gap-3">
+  <!-- O onclick foi ATUALIZADO para chamar a função runGeminiAnalysis() -->
+  <button data-template-id="ia-analyze-btn" class="canva-button px-5 py-2 rounded-lg text-sm font-semibold" style="background:#7c3aed;color:#fff;" onclick="runGeminiAnalysis()">🚀 Iniciar Análise via Gemini API</button> 
+  <button data-template-id="ia-export-btn" class="canva-button px-5 py-2 rounded-lg text-sm font-semibold" style="background:#3b82f6;color:#fff;" onclick="exportMarkdown()">💾 Exportar Relatório (Markdown)</button>
+</div>
+
+<div id="ia-results" class="mt-4 space-y-3 hidden">
+  <h3 class="font-semibold text-gray-800">Resultado da Análise Lean:</h3>
+  <div id="ia-output" class="bg-gray-50 rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap"></div>
+</div>
    </section>
   </main>
   <script src="/_sdk/571d88ca352bbccf.editing_sdk.js" integrity="sha512-jpVzCgOJfgU8ETK2cVi9ukdjrZIqXjCspYqy9afx1TyeJ4jZxisBmh2SIlonXgbaxCv9M5yrk3WY4wZKWDC3Ig=="></script>
@@ -385,7 +396,62 @@
       const blob = new Blob([md], { type: 'text/markdown' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'relatorio_lean.md'; a.click();
     }
+// <--- ADICIONE A FUNÇÃO DA API AQUI DEBAIXO --->
+   
+   async function runGeminiAnalysis() {
+      const apiKeyInput = document.getElementById('gemini-key');
+      const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
+      
+      if (!apiKey) {
+        alert('Por favor, informe sua chave da API do Gemini.');
+        return;
+      }
 
+      const results = document.getElementById('ia-results');
+      const output = document.getElementById('ia-output');
+      
+      if (results) results.classList.remove('hidden');
+      if (output) output.innerText = 'Processando análise com IA Gemini...';
+
+      const tasks = getTaskNodes();
+      const payload = {
+        processo: tasks.map(t => ({ id: t.id, nome: t.label })),
+        conexoes: bpmnConnections,
+        sipoc: {
+          fornecedores: document.getElementById('sipoc-s')?.value || '',
+          entradas: document.getElementById('sipoc-i')?.value || '',
+          saidas: document.getElementById('sipoc-o')?.value || '',
+          clientes: document.getElementById('sipoc-c')?.value || ''
+        },
+        detalhamento5W2H: w5h2Data
+      };
+
+      const promptText = `Atue como um especialista Lean. Analise os seguintes dados do processo e forneça sugestões de melhoria e identificação de desperdícios:\n${JSON.stringify(payload, null, 2)}`;
+
+      try {
+        // Chamada usando o modelo gemini-1.5-flash com validação adequada
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error?.message || `Erro na requisição: ${res.status}`);
+        }
+
+        // Validação que evita o erro "Cannot read properties of undefined (reading '0')"
+        if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+          output.innerText = data.candidates[0].content.parts[0].text;
+        } else {
+          output.innerText = 'A resposta da API retornou vazia ou em formato inesperado.';
+        }
+      } catch (err) {
+        output.innerText = 'Erro ao processar análise via API: ' + err.message;
+      }
+    }
     loadBpmnExample();
   </script>
  </body>
