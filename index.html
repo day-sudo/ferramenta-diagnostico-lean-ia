@@ -126,10 +126,9 @@
         <div class="flex items-center gap-2 mb-1">
           <span class="text-xl">🤖</span>
          <h2 data-template-id="ia-heading" class="canva-text font-bold text-xl" style="color:#1e293b;">IA Lean (Análise Avançada)</h2>
-</div>
 <p data-template-id="ia-desc" class="canva-text text-sm mb-4" style="color:#64748b;">Insira sua Chave de API do Gemini para gerar uma análise contextualizada de desperdícios Lean.</p>
 
-<!-- NOVO CAMPO ADICIONADO: Input para a API Key -->
+<!-- Novo campo de input para a Chave da API -->
 <div class="mb-4">
   <label for="gemini-key" class="block text-sm font-medium mb-1" style="color:#334155;">Gemini API Key:</label>
   <input type="password" id="gemini-key" class="w-full max-w-md p-2 border border-gray-300 rounded-lg text-sm" placeholder="Cole sua chave AI Studio aqui..." />
@@ -143,7 +142,7 @@
 </div>
 
 <div class="flex flex-wrap gap-3">
-  <!-- O onclick foi ATUALIZADO para chamar a função runGeminiAnalysis() -->
+  <!-- Botão atualizado chamando runGeminiAnalysis() -->
   <button data-template-id="ia-analyze-btn" class="canva-button px-5 py-2 rounded-lg text-sm font-semibold" style="background:#7c3aed;color:#fff;" onclick="runGeminiAnalysis()">🚀 Iniciar Análise via Gemini API</button> 
   <button data-template-id="ia-export-btn" class="canva-button px-5 py-2 rounded-lg text-sm font-semibold" style="background:#3b82f6;color:#fff;" onclick="exportMarkdown()">💾 Exportar Relatório (Markdown)</button>
 </div>
