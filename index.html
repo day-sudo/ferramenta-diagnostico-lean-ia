@@ -125,317 +125,350 @@
       <div class="rounded-2xl p-6 shadow-lg bg-white border border-slate-100">
         <div class="flex items-center gap-2 mb-1">
           <span class="text-xl">🤖</span>
-         <h2 data-template-id="ia-heading" class="canva-text font-bold text-xl" style="color:#1e293b;">IA Lean (Análise Avançada)</h2>
-<p data-template-id="ia-desc" class="canva-text text-sm mb-4" style="color:#64748b;">Insira sua Chave de API do Gemini para gerar uma análise contextualizada de desperdícios Lean.</p>
+          <h2 class="font-bold text-xl text-slate-800">IA Lean (Análise Avançada)</h2>
+        </div>
+        <p class="text-sm text-slate-500 mb-4">Insira sua Chave de API do Gemini para gerar uma análise contextualizada de desperdícios Lean.</p>
+        
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Gemini API Key:</label>
+          <input type="password" id="gemini-key" placeholder="AIzaSy..." class="w-full md:w-1/2 border rounded-lg p-2 text-sm">
+        </div>
 
-<!-- Novo campo de input para a Chave da API -->
-<div class="mb-4">
-  <label for="gemini-key" class="block text-sm font-medium mb-1" style="color:#334155;">Gemini API Key:</label>
-  <input type="password" id="gemini-key" class="w-full max-w-md p-2 border border-gray-300 rounded-lg text-sm" placeholder="Cole sua chave AI Studio aqui..." />
-</div>
+        <div class="flex flex-wrap gap-3 mb-4">
+          <button class="px-5 py-2 rounded-lg text-sm font-semibold bg-purple-600 text-white hover:bg-purple-700" onclick="runGeminiAnalysis()">🚀 Iniciar Análise via Gemini API</button>
+        </div>
 
-<div id="ia-summary" class="mb-4 p-4 bg-gray-50 rounded-lg border text-sm space-y-2">
-  <p class="font-semibold text-gray-700">Resumo dos dados coletados:</p>
-  <div id="ia-summary-content" class="text-gray-600">
-    Preencha as etapas anteriores para gerar o diagnóstico.
-  </div>
-</div>
-
-<div class="flex flex-wrap gap-3">
-  <!-- Botão atualizado chamando runGeminiAnalysis() -->
-  <button data-template-id="ia-analyze-btn" class="canva-button px-5 py-2 rounded-lg text-sm font-semibold" style="background:#7c3aed;color:#fff;" onclick="runGeminiAnalysis()">🚀 Iniciar Análise via Gemini API</button> 
-  <button data-template-id="ia-export-btn" class="canva-button px-5 py-2 rounded-lg text-sm font-semibold" style="background:#3b82f6;color:#fff;" onclick="exportMarkdown()">💾 Exportar Relatório (Markdown)</button>
-</div>
-
-<div id="ia-results" class="mt-4 space-y-3 hidden">
-  <h3 class="font-semibold text-gray-800">Resultado da Análise Lean:</h3>
-  <div id="ia-output" class="bg-gray-50 rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap"></div>
-</div>
-  </div>
+        <div id="ia-results" class="mt-4 space-y-3 hidden">
+          <h3 class="font-semibold text-slate-800">Resultado da Análise Lean:</h3>
+          <div id="ia-output" class="bg-slate-50 border rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap"></div>
+        </div>
+      </div>
     </section>
   </main>
+
   <script>
-let bpmnNodes = [];
-let bpmnConnections = [];
-let nextId = 1;
-let currentTool = 'move';
-let connectFrom = null;
-let w5h2Data = {};
+    let bpmnNodes = [];
+    let bpmnConnections = [];
+    let nextId = 1;
+    let currentTool = 'move';
+    let connectFrom = null;
+    let w5h2Data = {};
+    let sipocData = {};
 
-function switchTab(tab) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
-  document.getElementById('panel-' + tab).classList.remove('hidden');
-  document.querySelectorAll('[role="tab"]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
-  const btn = document.querySelector(`[onclick="switchTab('${tab}')"]`);
-  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-selected', 'true'); }
-  if (tab === 'sipoc') updateSipocProcess();
-  if (tab === '5w2h') updateW5h2Select();
-  if (tab === 'ia') updateIaSummary();
-}
-
-function setTool(tool) {
-  currentTool = tool;
-  connectFrom = null;
-  document.querySelectorAll('.toolbar-btn').forEach(b => b.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
-  const canvas = document.getElementById('bpmn-canvas');
-  canvas.style.cursor = tool === 'move' ? 'grab' : tool === 'connect' ? 'pointer' : tool === 'delete' ? 'not-allowed' : 'crosshair';
-}
-
-function canvasClick(e) {
-  if (e.target !== document.getElementById('bpmn-canvas') && !e.target.closest('svg')) return;
-  if (currentTool === 'move' || currentTool === 'connect' || currentTool === 'delete') return;
-  const canvas = document.getElementById('bpmn-canvas');
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left - 20;
-  const y = e.clientY - rect.top - 20;
-  let label = '';
-  if (currentTool === 'task') { label = 'Tarefa ' + nextId; }
-  else if (currentTool === 'start') { label = 'Início'; }
-  else if (currentTool === 'end') { label = 'Fim'; }
-  bpmnNodes.push({ id: nextId++, type: currentTool, label, x, y });
-  renderBpmn();
-}
-
-function getTaskNodes() { return bpmnNodes.filter(n => n.type === 'task'); }
-
-function renderBpmn() {
-  const canvas = document.getElementById('bpmn-canvas');
-  canvas.innerHTML = '';
-  canvas.style.height = '380px';
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('class', 'absolute inset-0 w-full h-full pointer-events-none');
-  svg.style.zIndex = '0';
-  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-  defs.innerHTML = '<marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6b7280"/></marker>';
-  svg.appendChild(defs);
-  bpmnConnections.forEach(([fromId, toId]) => {
-    const a = bpmnNodes.find(n => n.id === fromId);
-    const b = bpmnNodes.find(n => n.id === toId);
-    if (!a || !b) return;
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', getNodeCenterX(a)); line.setAttribute('y1', getNodeCenterY(a));
-    line.setAttribute('x2', getNodeCenterX(b)); line.setAttribute('y2', getNodeCenterY(b));
-    line.setAttribute('stroke', '#6b7280'); line.setAttribute('stroke-width', '2');
-    line.setAttribute('marker-end', 'url(#arrow)');
-    svg.appendChild(line);
-  });
-  canvas.appendChild(svg);
-
-  bpmnNodes.forEach(node => {
-    const el = document.createElement('div');
-    el.className = 'bpmn-node flex flex-col items-center';
-    el.style.left = node.x + 'px'; el.style.top = node.y + 'px';
-    el.dataset.nodeId = node.id;
-    if (node.type === 'start') {
-      el.innerHTML = `<div class="w-9 h-9 rounded-full border-[3px] border-green-600 bg-green-100"></div><span class="text-[10px] mt-1 text-gray-600">${node.label}</span>`;
-    } else if (node.type === 'end') {
-      el.innerHTML = `<div class="w-9 h-9 rounded-full border-4 border-red-600 bg-red-100"></div><span class="text-[10px] mt-1 text-gray-600">${node.label}</span>`;
-    } else if (node.type === 'gateway') {
-      el.innerHTML = `<div class="w-9 h-9 bg-yellow-400 rotate-45 border-2 border-yellow-600 flex items-center justify-center"><span class="text-white font-bold -rotate-45 text-xs">✕</span></div>`;
-    } else {
-      el.innerHTML = `<div class="px-3 py-2 bg-white border-2 border-blue-400 rounded text-[11px] text-center shadow-sm whitespace-nowrap max-w-[140px] truncate">${node.label}</div>`;
-    }
-    el.addEventListener('mousedown', (e) => {
-      if (currentTool === 'delete') { bpmnNodes = bpmnNodes.filter(n => n.id !== node.id); bpmnConnections = bpmnConnections.filter(c => c[0] !== node.id && c[1] !== node.id); renderBpmn(); return; }
-      if (currentTool === 'connect') {
-        if (!connectFrom) { connectFrom = node.id; el.style.outline = '2px solid #7c3aed'; }
-        else { if (connectFrom !== node.id) bpmnConnections.push([connectFrom, node.id]); connectFrom = null; renderBpmn(); }
-        e.stopPropagation(); return;
-      }
-      let dragging = true;
-      const ox = e.offsetX, oy = e.offsetY;
-      const moveHandler = (ev) => { if (!dragging) return; const rect = canvas.getBoundingClientRect(); node.x = Math.max(0, ev.clientX - rect.left - ox); node.y = Math.max(0, ev.clientY - rect.top - oy); renderBpmn(); };
-      const upHandler = () => { dragging = false; document.removeEventListener('mousemove', moveHandler); document.removeEventListener('mouseup', upHandler); };
-      document.addEventListener('mousemove', moveHandler); document.addEventListener('mouseup', upHandler); e.stopPropagation();
+    // Inicialização
+    window.addEventListener('DOMContentLoaded', () => {
+      loadLocalStorage();
+      if(bpmnNodes.length === 0) loadBpmnExample();
+      renderBpmn();
     });
-    if (node.type === 'task') {
-      el.addEventListener('dblclick', () => {
-        const input = document.createElement('input');
-        input.type = 'text'; input.value = node.label;
-        input.className = 'text-xs border rounded px-1 py-0.5 w-28';
-        input.style.position = 'absolute'; input.style.left = node.x + 'px'; input.style.top = (node.y + 40) + 'px'; input.style.zIndex = '10';
-        input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { node.label = input.value || node.label; input.remove(); renderBpmn(); } if (ev.key === 'Escape') { input.remove(); } });
-        input.addEventListener('blur', () => { node.label = input.value || node.label; input.remove(); renderBpmn(); });
-        canvas.appendChild(input); input.focus();
+
+    function saveLocalStorage() {
+      const data = { bpmnNodes, bpmnConnections, nextId, w5h2Data, sipocData };
+      localStorage.setItem('lean_diag_store', JSON.stringify(data));
+    }
+
+    function loadLocalStorage() {
+      const saved = localStorage.getItem('lean_diag_store');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          bpmnNodes = data.bpmnNodes || [];
+          bpmnConnections = data.bpmnConnections || [];
+          nextId = data.nextId || 1;
+          w5h2Data = data.w5h2Data || {};
+          sipocData = data.sipocData || {};
+        } catch(e) { console.error('Erro ao ler localStorage', e); }
+      }
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById('panel-' + tab).classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      
+      if (tab === 'sipoc') renderSipocTable();
+      if (tab === '5w2h') updateW5h2Select();
+    }
+
+    function setTool(tool) {
+      currentTool = tool;
+      connectFrom = null;
+      document.querySelectorAll('.toolbar-btn').forEach(b => b.classList.remove('selected'));
+      if(event && event.currentTarget) event.currentTarget.classList.add('selected');
+    }
+
+    // Drag and Drop
+    function handleDragStart(e, type) { e.dataTransfer.setData('text/plain', type); }
+    function handleDrop(e) {
+      e.preventDefault();
+      const type = e.dataTransfer.getData('text/plain');
+      if (!type) return;
+      const canvas = document.getElementById('bpmn-canvas');
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left - 30;
+      const y = e.clientY - rect.top - 20;
+      addNode(type, x, y);
+    }
+
+    function canvasClick(e) {
+      if (e.target !== document.getElementById('bpmn-canvas') && !e.target.closest('svg')) return;
+      if (['move', 'connect', 'delete'].includes(currentTool)) return;
+      const canvas = document.getElementById('bpmn-canvas');
+      const rect = canvas.getBoundingClientRect();
+      addNode(currentTool, e.clientX - rect.left - 30, e.clientY - rect.top - 20);
+    }
+
+    function addNode(type, x, y) {
+      let label = type === 'task' ? 'Tarefa ' + nextId : type === 'start' ? 'Início' : type === 'end' ? 'Fim' : '';
+      bpmnNodes.push({ id: nextId++, type, label, x, y });
+      renderBpmn();
+      saveLocalStorage();
+    }
+
+    // Renderização Ortogonal de Conexões
+    function getNodeCenter(n) {
+      return { x: n.type === 'task' ? n.x + 60 : n.x + 20, y: n.y + 20 };
+    }
+
+    function renderBpmn() {
+      const canvas = document.getElementById('bpmn-canvas');
+      canvas.innerHTML = '';
+      
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'absolute inset-0 w-full h-full pointer-events-none');
+      svg.style.zIndex = '0';
+      svg.innerHTML = `<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6b7280"/></marker></defs>`;
+      
+      bpmnConnections.forEach(([fromId, toId]) => {
+        const a = bpmnNodes.find(n => n.id === fromId);
+        const b = bpmnNodes.find(n => n.id === toId);
+        if (!a || !b) return;
+        
+        const start = getNodeCenter(a);
+        const end = getNodeCenter(b);
+        const midX = start.x + (end.x - start.x) / 2;
+        
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = `M ${start.x} ${start.y} L ${midX} ${start.y} L ${midX} ${end.y} L ${end.x} ${end.y}`;
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', '#6b7280');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('marker-end', 'url(#arrow)');
+        svg.appendChild(path);
+      });
+      canvas.appendChild(svg);
+
+      bpmnNodes.forEach(node => {
+        const el = document.createElement('div');
+        el.className = 'bpmn-node flex flex-col items-center';
+        el.style.left = node.x + 'px'; el.style.top = node.y + 'px';
+        el.dataset.nodeId = node.id;
+        
+        // Destacar gargalos (se 5W2H tiver custo alto ou regras de retrabalho)
+        const w5 = w5h2Data[node.id] || {};
+        const isCritical = (w5.howmuch && w5.howmuch.length > 3) || (w5.how && w5.how.toLowerCase().includes('retrabalho'));
+        const criticalBorder = isCritical ? 'border-amber-500 border-4' : 'border-blue-400 border-2';
+
+        if (node.type === 'start') {
+          el.innerHTML = `<div class="w-9 h-9 rounded-full border-[3px] border-green-600 bg-green-100 flex items-center justify-center"></div><span class="text-[10px] mt-1 text-slate-600 font-medium">${node.label}</span>`;
+        } else if (node.type === 'end') {
+          el.innerHTML = `<div class="w-9 h-9 rounded-full border-4 border-red-600 bg-red-100 flex items-center justify-center"></div><span class="text-[10px] mt-1 text-slate-600 font-medium">${node.label}</span>`;
+        } else if (node.type === 'gateway') {
+          el.innerHTML = `<div class="w-9 h-9 bg-yellow-400 rotate-45 border-2 border-yellow-600 flex items-center justify-center shadow-sm"><span class="text-white font-bold -rotate-45 text-xs">✕</span></div>`;
+        } else {
+          el.innerHTML = `<div class="px-3 py-2 bg-white ${criticalBorder} rounded text-[11px] font-medium text-center shadow-sm whitespace-nowrap max-w-[140px] truncate">${node.label}</div>`;
+        }
+
+        el.addEventListener('mousedown', (e) => {
+          if (currentTool === 'delete') {
+            bpmnNodes = bpmnNodes.filter(n => n.id !== node.id);
+            bpmnConnections = bpmnConnections.filter(c => c[0] !== node.id && c[1] !== node.id);
+            delete w5h2Data[node.id];
+            delete sipocData[node.id];
+            renderBpmn(); saveLocalStorage(); return;
+          }
+          if (currentTool === 'connect') {
+            if (!connectFrom) { connectFrom = node.id; el.style.outline = '2px solid #7c3aed'; }
+            else { if (connectFrom !== node.id) bpmnConnections.push([connectFrom, node.id]); connectFrom = null; renderBpmn(); saveLocalStorage(); }
+            e.stopPropagation(); return;
+          }
+          let dragging = true;
+          const ox = e.offsetX, oy = e.offsetY;
+          const moveHandler = (ev) => {
+            if (!dragging) return;
+            const rect = canvas.getBoundingClientRect();
+            node.x = Math.max(0, ev.clientX - rect.left - ox);
+            node.y = Math.max(0, ev.clientY - rect.top - oy);
+            renderBpmn();
+          };
+          const upHandler = () => { dragging = false; document.removeEventListener('mousemove', moveHandler); document.removeEventListener('mouseup', upHandler); saveLocalStorage(); };
+          document.addEventListener('mousemove', moveHandler); document.addEventListener('mouseup', upHandler); e.stopPropagation();
+        });
+
+        if (node.type === 'task') {
+          el.addEventListener('dblclick', () => {
+            const input = document.createElement('input');
+            input.type = 'text'; input.value = node.label;
+            input.className = 'text-xs border rounded px-1 py-0.5 w-28 absolute z-20';
+            input.style.left = node.x + 'px'; input.style.top = (node.y + 35) + 'px';
+            input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { node.label = input.value || node.label; input.remove(); renderBpmn(); saveLocalStorage(); } });
+            input.addEventListener('blur', () => { node.label = input.value || node.label; input.remove(); renderBpmn(); saveLocalStorage(); });
+            canvas.appendChild(input); input.focus();
+          });
+        }
+        canvas.appendChild(el);
       });
     }
-    canvas.appendChild(el);
-  });
-}
 
-function getNodeCenterX(n) { return n.type === 'task' ? n.x + 50 : n.x + 18; }
-function getNodeCenterY(n) { return n.y + 18; }
-
-function loadBpmnExample() {
-  bpmnNodes = [
-    { id: 1, type: 'start', label: 'Início do Processo', x: 20, y: 150 },
-    { id: 2, type: 'task', label: 'Receber Solicitação', x: 100, y: 138 },
-    { id: 3, type: 'task', label: 'Analisar Solicitação', x: 270, y: 138 },
-    { id: 4, type: 'gateway', label: '', x: 430, y: 150 },
-    { id: 5, type: 'task', label: 'Executar Atividade', x: 510, y: 90 },
-    { id: 6, type: 'task', label: 'Comunicar Solicitante', x: 510, y: 220 },
-    { id: 7, type: 'task', label: 'Validar Resultado', x: 680, y: 90 },
-    { id: 8, type: 'gateway', label: '', x: 830, y: 102 },
-    { id: 9, type: 'task', label: 'Finalizar Processo', x: 910, y: 90 },
-    { id: 10, type: 'end', label: 'Fim do Processo', x: 1070, y: 102 },
-    { id: 11, type: 'task', label: 'Tratar Não Conformidade', x: 840, y: 220 },
-  ];
-  bpmnConnections = [[1,2],[2,3],[3,4],[4,5],[4,6],[5,7],[7,8],[8,9],[9,10],[8,11]];
-  nextId = 12;
-  renderBpmn();
-}
-
-function saveBpmnXml() {
-  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<process>\n';
-  bpmnNodes.forEach(n => { xml += `  <node id="${n.id}" type="${n.type}" label="${n.label}" x="${Math.round(n.x)}" y="${Math.round(n.y)}"/>\n`; });
-  bpmnConnections.forEach(c => { xml += `  <connection from="${c[0]}" to="${c[1]}"/>\n`; });
-  xml += '</process>';
-  const blob = new Blob([xml], { type: 'application/xml' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'processo_bpmn.xml'; a.click();
-}
-
-function updateSipocProcess() {
-  const tasks = getTaskNodes();
-  const el = document.getElementById('sipoc-process');
-  el.innerHTML = tasks.length === 0 ? '<em>Nenhuma tarefa encontrada no diagrama.</em>' : tasks.map((t, i) => `<div class="py-1 border-b border-gray-200 last:border-0">${i + 1}. ${t.label}</div>`).join('');
-}
-
-function updateW5h2Select() {
-  const select = document.getElementById('w5h2-task-select');
-  const tasks = getTaskNodes();
-  const currentVal = select.value;
-  select.innerHTML = '<option value="">-- Selecione uma tarefa do BPMN --</option>';
-  tasks.forEach(t => { const opt = document.createElement('option'); opt.value = t.label; opt.textContent = t.label; select.appendChild(opt); });
-  if (currentVal && tasks.find(t => t.label === currentVal)) select.value = currentVal;
-}
-
-function selectW5h2Task() {
-  const select = document.getElementById('w5h2-task-select');
-  const form = document.getElementById('w5h2-form');
-  if (!select.value) { form.classList.add('hidden'); return; }
-  form.classList.remove('hidden');
-  saveCurrentW5h2();
-  const data = w5h2Data[select.value] || {};
-  document.getElementById('w5h2-what').value = data.what || select.value;
-  document.getElementById('w5h2-why').value = data.why || '';
-  document.getElementById('w5h2-where').value = data.where || '';
-  document.getElementById('w5h2-when').value = data.when || '';
-  document.getElementById('w5h2-who').value = data.who || '';
-  document.getElementById('w5h2-how').value = data.how || '';
-  document.getElementById('w5h2-howmuch').value = data.howmuch || '';
-}
-
-function saveCurrentW5h2() {
-  const select = document.getElementById('w5h2-task-select');
-  const key = select.dataset.lastTask;
-  if (key) {
-    w5h2Data[key] = { what: document.getElementById('w5h2-what').value, why: document.getElementById('w5h2-why').value, where: document.getElementById('w5h2-where').value, when: document.getElementById('w5h2-when').value, who: document.getElementById('w5h2-who').value, how: document.getElementById('w5h2-how').value, howmuch: document.getElementById('w5h2-howmuch').value };
-  }
-  select.dataset.lastTask = select.value;
-}
-
-document.addEventListener('input', (e) => {
-  if (e.target.id && e.target.id.startsWith('w5h2-')) {
-    const select = document.getElementById('w5h2-task-select');
-    if (select.value) {
-      w5h2Data[select.value] = { what: document.getElementById('w5h2-what').value, why: document.getElementById('w5h2-why').value, where: document.getElementById('w5h2-where').value, when: document.getElementById('w5h2-when').value, who: document.getElementById('w5h2-who').value, how: document.getElementById('w5h2-how').value, howmuch: document.getElementById('w5h2-howmuch').value };
+    // Validação de Fluxo
+    function validateFlow() {
+      document.querySelectorAll('.node-error').forEach(el => el.classList.remove('node-error'));
+      let errors = 0;
+      bpmnNodes.forEach(node => {
+        const hasInputs = bpmnConnections.some(c => c[1] === node.id);
+        const hasOutputs = bpmnConnections.some(c => c[0] === node.id);
+        if (node.type !== 'start' && !hasInputs) { flagError(node.id); errors++; }
+        if (node.type !== 'end' && !hasOutputs) { flagError(node.id); errors++; }
+      });
+      alert(errors === 0 ? "✅ Fluxo válido! Todos os elementos estão devidamente conectados." : `⚠️ Foram encontrados ${errors} nó(s) com desconexões.`);
     }
-  }
-});
 
-function updateIaSummary() {
-  const tasks = getTaskNodes();
-  const sipocS = document.getElementById('sipoc-s')?.value || '';
-  const sipocI = document.getElementById('sipoc-i')?.value || '';
-  const sipocO = document.getElementById('sipoc-o')?.value || '';
-  const sipocC = document.getElementById('sipoc-c')?.value || '';
-  let html = '';
-  html += `<p><strong>BPMN:</strong> ${tasks.length} tarefa(s) mapeada(s)</p>`;
-  if (sipocS || sipocI || sipocO || sipocC) html += `<p><strong>SIPOC:</strong> Preenchido</p>`;
-  const detailedTasks = Object.keys(w5h2Data).filter(k => w5h2Data[k].what);
-  if (detailedTasks.length) html += `<p><strong>5W2H:</strong> ${detailedTasks.length} tarefa(s) detalhada(s)</p>`;
-  if (!html) html = 'Preencha as etapas anteriores para gerar o diagnóstico.';
-  document.getElementById('ia-summary-content').innerHTML = html;
-}
+    function flagError(id) {
+      const el = document.querySelector(`[data-node-id="${id}"]`);
+      if (el) el.classList.add('node-error');
+    }
 
-async function runGeminiAnalysis() {
-  const apiKeyInput = document.getElementById('gemini-key');
-  const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
-  
-  if (!apiKey) {
-    alert('Por favor, informe sua chave da API do Gemini.');
-    return;
-  }
+    // Tabela SIPOC
+    function renderSipocTable() {
+      const tbody = document.getElementById('sipoc-table-body');
+      tbody.innerHTML = '';
+      const tasks = bpmnNodes.filter(n => n.type === 'task');
+      if (tasks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Nenhuma tarefa mapeada no BPMN.</td></tr>`;
+        return;
+      }
+      tasks.forEach(task => {
+        const data = sipocData[task.id] || { s: '', i: '', o: '', c: '' };
+        const tr = document.createElement('tr');
+        tr.className = 'border-b hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="p-2 border"><input class="w-full text-xs p-1 border rounded" value="${data.s}" onchange="updateSipocField(${task.id}, 's', this.value)"></td>
+          <td class="p-2 border"><input class="w-full text-xs p-1 border rounded" value="${data.i}" onchange="updateSipocField(${task.id}, 'i', this.value)"></td>
+          <td class="p-2 border font-semibold text-purple-700 bg-purple-50">${task.label}</td>
+          <td class="p-2 border"><input class="w-full text-xs p-1 border rounded" value="${data.o}" onchange="updateSipocField(${task.id}, 'o', this.value)"></td>
+          <td class="p-2 border"><input class="w-full text-xs p-1 border rounded" value="${data.c}" onchange="updateSipocField(${task.id}, 'c', this.value)"></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
-  const results = document.getElementById('ia-results');
-  const output = document.getElementById('ia-output');
-  
-  if (results) results.classList.remove('hidden');
-  if (output) output.innerText = 'Processando análise com IA Gemini...';
+    function updateSipocField(id, field, val) {
+      if (!sipocData[id]) sipocData[id] = { s: '', i: '', o: '', c: '' };
+      sipocData[id][field] = val;
+      saveLocalStorage();
+    }
 
-  const tasks = getTaskNodes();
-  const payload = {
-    processo: tasks.map(t => ({ id: t.id, nome: t.label })),
-    conexoes: bpmnConnections,
-    sipoc: {
-      fornecedores: document.getElementById('sipoc-s')?.value || '',
-      entradas: document.getElementById('sipoc-i')?.value || '',
-      saidas: document.getElementById('sipoc-o')?.value || '',
-      clientes: document.getElementById('sipoc-c')?.value || ''
-    },
-    detalhamento5W2H: w5h2Data
-  };
+    // Event Delegation no 5W2H (Por Node ID)
+    function updateW5h2Select() {
+      const select = document.getElementById('w5h2-task-select');
+      select.innerHTML = '<option value="">-- Selecione uma tarefa --</option>';
+      bpmnNodes.filter(n => n.type === 'task').forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id; opt.textContent = t.label;
+        select.appendChild(opt);
+      });
+    }
 
-  const promptText = `Atue como um especialista Lean. Analise os seguintes dados do processo e forneça sugestões de melhoria e identificação de desperdícios:\n${JSON.stringify(payload, null, 2)}`;
+    function loadW5h2Form() {
+      const id = document.getElementById('w5h2-task-select').value;
+      const form = document.getElementById('w5h2-form');
+      if (!id) { form.classList.add('hidden'); return; }
+      form.classList.remove('hidden');
+      const data = w5h2Data[id] || {};
+      form.querySelectorAll('input').forEach(input => {
+        const field = input.dataset.field;
+        input.value = data[field] || '';
+      });
+    }
 
-  try {
-    // Usando a API v1 oficial com o gemini-1.5-flash
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+    document.getElementById('w5h2-form').addEventListener('input', (e) => {
+      const id = document.getElementById('w5h2-task-select').value;
+      if (!id || !e.target.dataset.field) return;
+      if (!w5h2Data[id]) w5h2Data[id] = {};
+      w5h2Data[id][e.target.dataset.field] = e.target.value;
+      saveLocalStorage();
+      renderBpmn(); // Atualiza indicadores de gargalo
     });
 
-    const data = await res.json();
+    // Análise IA Real via API Gemini
+    async function runGeminiAnalysis() {
+      const apiKey = document.getElementById('gemini-key').value;
+      if (!apiKey) { alert('Por favor, informe sua chave da API do Gemini.'); return; }
+      
+      const payload = {
+        processo: bpmnNodes.map(n => ({ id: n.id, tipo: n.type, nome: n.label })),
+        conexoes: bpmnConnections,
+        sipoc: sipocData,
+        detalhamento5W2H: w5h2Data
+      };
 
-    if (!res.ok) {
-      throw new Error(data.error?.message || `Erro na requisição: ${res.status}`);
+      const prompt = `Atue como especialista em Lean Manufacturing e Mapeamento de Fluxo de Valor. Analise a seguinte estrutura de processo e identifique gargalos e potenciais desperdícios (Superprodução, Espera, Transporte, Processamento Excessivo, Estoque, Movimentação e Defeitos). Forneça recomendações práticas de melhoria:\n\n${JSON.stringify(payload, null, 2)}`;
+
+      const results = document.getElementById('ia-results');
+      const output = document.getElementById('ia-output');
+      results.classList.remove('hidden');
+      output.innerText = 'Processando análise com IA Gemini...';
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await res.json();
+        output.innerText = data.candidates[0].content.parts[0].text;
+      } catch (err) {
+        output.innerText = 'Erro ao processar análise via API: ' + err.message;
+      }
     }
 
-    if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-      output.innerText = data.candidates[0].content.parts[0].text;
-    } else {
-      output.innerText = 'A resposta da API retornou vazia ou em formato inesperado.';
+    // Exportação SVG/PNG
+    function exportImage(format) {
+      const canvas = document.getElementById('bpmn-canvas');
+      const svgEl = canvas.querySelector('svg');
+      if (!svgEl) return;
+      
+      const svgData = new XMLSerializer().serializeToString(svgEl);
+      if (format === 'svg') {
+        const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diagrama.svg'; a.click();
+      } else {
+        const img = new Image();
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        img.onload = () => {
+          const cvs = document.createElement('canvas');
+          cvs.width = canvas.clientWidth; cvs.height = canvas.clientHeight;
+          const ctx = cvs.getContext('2d');
+          ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cvs.width, cvs.height);
+          ctx.drawImage(img, 0, 0);
+          const a = document.createElement('a'); a.href = cvs.toDataURL('image/png'); a.download = 'diagrama.png'; a.click();
+        };
+      }
     }
-  } catch (err) {
-    output.innerText = 'Erro ao processar análise via API: ' + err.message;
-  }
-}
 
-function exportMarkdown() {
-  const tasks = getTaskNodes();
-  let md = '# Relatório de Diagnóstico Lean\n\n';
-  md += '## BPMN - Tarefas Mapeadas\n';
-  tasks.forEach((t, i) => { md += `${i + 1}. ${t.label}\n`; });
-  md += '\n## SIPOC\n';
-  md += `- **Fornecedores:** ${document.getElementById('sipoc-s')?.value || 'N/A'}\n`;
-  md += `- **Entradas:** ${document.getElementById('sipoc-i')?.value || 'N/A'}\n`;
-  md += `- **Processo:** ${tasks.map(t => t.label).join(', ') || 'N/A'}\n`;
-  md += `- **Saídas:** ${document.getElementById('sipoc-o')?.value || 'N/A'}\n`;
-  md += `- **Clientes:** ${document.getElementById('sipoc-c')?.value || 'N/A'}\n`;
-  md += '\n## 5W2H - Detalhamento\n';
-  Object.entries(w5h2Data).forEach(([task, d]) => {
-    md += `\n### ${task}\n`;
-    md += `- What: ${d.what || 'N/A'}\n- Why: ${d.why || 'N/A'}\n- Where: ${d.where || 'N/A'}\n- When: ${d.when || 'N/A'}\n- Who: ${d.who || 'N/A'}\n- How: ${d.how || 'N/A'}\n- How Much: ${d.howmuch || 'N/A'}\n`;
-  });
-  md += '\n## Análise IA Lean\n';
-  md += document.getElementById('ia-output')?.innerText || 'Análise não executada.';
-  const blob = new Blob([md], { type: 'text/markdown' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'relatorio_lean.md'; a.click();
-}
-
-loadBpmnExample();
+    function loadBpmnExample() {
+      bpmnNodes = [
+        { id: 1, type: 'start', label: 'Início', x: 20, y: 150 },
+        { id: 2, type: 'task', label: 'Receber Pedido', x: 100, y: 138 },
+        { id: 3, type: 'task', label: 'Validar Estoque', x: 270, y: 138 },
+        { id: 4, type: 'end', label: 'Fim', x: 450, y: 150 }
+      ];
+      bpmnConnections = [[1,2],[2,3],[3,4]];
+      nextId = 5;
+      renderBpmn();
+    }
   </script>
- </body>
+</body>
 </html>
